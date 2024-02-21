@@ -14,6 +14,6 @@ class DataStorage(ABC):
     def store(self, data: pd.DataFrame) -> pd.DataFrame:
         pass
     
-    @abstractmethod
-    def load_sequential() -> pd.DataFrame:
-        pass
+    # @abstractmethod
+    # def load_sequential() -> pd.DataFrame:
+    #     pass
