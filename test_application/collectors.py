@@ -19,8 +19,8 @@ class robinhoodCollector(DataCollector):
 
 # Weather Collectors
     
-class weatherAPICollector(DataCollector):
+class openWeatherCollector(DataCollector):
 
     def retrieve_data(self, domain, location=None):
-        result = httpx.get(f"weatherapi.com/{domain}/{location}")
+        result = httpx.get(f"openweather_url/{location}/{domain}")
         return result
