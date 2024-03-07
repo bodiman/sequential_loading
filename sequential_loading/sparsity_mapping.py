@@ -8,7 +8,7 @@ from typing import TypeVar
 S = TypeVar('S', bound='SparsityMappingString')
 
 class SparsityMappingString():
-    def __init__(self, unit, string: str =None, date_to_str: function = None, str_to_date: function = None, datetime_format: str = None):
+    def __init__(self, unit, string: str =None, date_to_str: callable = None, str_to_date: callable = None, datetime_format: str = None):
         if string is None:
             string = "/"
 

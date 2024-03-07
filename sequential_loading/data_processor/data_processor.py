@@ -1,16 +1,18 @@
 from sequential_loading.data_storage.data_storage import DataStorage
 from sequential_loading.data_collector import DataCollector
-from sequential_loading.sparsity_mapping import SparsityMapping
+from sequential_loading.sparsity_mapping import SparsityMappingString
 
 from abc import ABC, abstractmethod
 
 import pandas as pd
 
-from typing import List, Type, TypedDict, TypeVar, Generic
+from typing import List, Type, TypedDict, TypeVar, Generic, Callable
 
 import logging
 
 import datetime
+
+import uuid
 
 SCHEMA = TypeVar("SCHEMA")
 PARAMSCHEMA = TypeVar("PARAMSCHEMA")
@@ -18,7 +20,7 @@ METASCHEMA = TypeVar("METASCHEMA")
 
 
 class DataProcessor(ABC, Generic[PARAMSCHEMA, METASCHEMA, SCHEMA]):
-    def __init__(self, collectors: List[DataCollector]):
+    def __init__(self, storage: DataStorage, collectors: List[DataCollector]):
         #convert types into dataframes (schemas)
         self.paramschema = pd.DataFrame(columns=[param for param in PARAMSCHEMA.__annotations__.keys()], dtypes=[param for param in PARAMSCHEMA.__annotations__.values()])
 
@@ -29,10 +31,54 @@ class DataProcessor(ABC, Generic[PARAMSCHEMA, METASCHEMA, SCHEMA]):
         
         self.collectors = collectors
 
-    #function for updating metadata. Takes in 
+        self.data: pd.DataFrame = self.schema
+        self.metadata: pd.DataFrame = self.metaschema
+
+        self.storage: DataStorage = storage
+        self.storage.initialize(self.name, self.schema, self.metaschema)
+
+        metadata = self.storage.retrieve_metadata(self)
+        self.metadata = pd.concat(self.metadata, metadata, verify_integrity=True)
+
+        self.update_map = self.configure_update_map()
+
+    """
+    This function will be called every time data is collected with parameters.
+
+    it will take in a set of parameters and optional metadata. It will use the self.update function to update the metadata and parameters accordingly.
+    """
+    def update_metadata(self, parameters: PARAMSCHEMA, info: METASCHEMA = None) -> pd.DataFrame:
+        #retrieve existing metadata from parameters
+        existing_metadata: pd.DataFrame = self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))
+
+        if not existing_metadata:
+            updated_metadata = self.default_metadata_initialize(parameters, info)
+            return updated_metadata
+
+        for key, value in {**parameters, **info}.items():
+            updater = self.update_map.get(key, self.default_metadata_update)
+            existing_metadata[key] = updater(value, existing_metadata[key])
+
+        return existing_metadata
+    
+    def default_metadata_update(self, parameters: PARAMSCHEMA, info: METASCHEMA = None) -> pd.DataFrame:
+        return pd.DataFrame({**parameters, **info})
+    
+    def default_metadata_initialize(self, parameters: PARAMSCHEMA, info: METASCHEMA = None,) -> pd.DataFrame:
+        self.metadata[self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))] = info
+        return self.metadata
+
     @abstractmethod
-    def update_metadata(self, **parameters) -> None:
-        return pd.DataFrame([dict(parameters)])
+    def configure_update_map(self) -> dict[str, callable]:
+        return {} #empty update map by default
+    
+    @abstractmethod
+    def collect(self, parameters: PARAMSCHEMA, collectors: List[DataCollector]) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    def delete(self, parameters: PARAMSCHEMA, collectors: List[DataCollector]) -> pd.DataFrame:
+        pass
 
 
 
@@ -77,15 +123,13 @@ delete: (domain: SparsityMapping, collectors: list[DataCollector], **parameters:
 """
 
 class IntervalParamSchema(TypedDict):
-        collector: str
         ticker: str
         domain: str
 
 class IntervalMetaSchema(TypedDict):
     id: str
     collector: str
-    ticker: str
-    domain: str
+    collected_items: int
 
 class EODSchema(TypedDict):
     id: str
@@ -96,50 +140,35 @@ class EODSchema(TypedDict):
     close: float
     volume: int
 
-class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema], SCHEMA):
+class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema, SCHEMA], Generic[SCHEMA]):
 
-    param_type = IntervalParamSchema
-
-
-    def __init__(self, schema: Type, storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
-        super().__init__(self.param_schema, schema, collectors)
-
-        self.data: pd.DataFrame = self.schema
-        self.metadata: pd.DataFrame = self.metaschema
-
-        self.storage: DataStorage = storage
-        self.storage.initialize(self)
-
-        metadata = self.storage.retrieve_metadata(self)
-        self.metadata = pd.concat(self.metadata, metadata, verify_integrity=True)
+    def __init__(self, storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
+        super().__init__(storage, collectors)
 
         self.unit = unit
 
         self.logger = logging.getLogger(__name__)
 
-    def clear_data(self) -> None:
-        self.data = self.schema
+    def configure_update_map(self) -> dict[str, callable]:
+        return {
+            'domain': lambda x, y: SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y),
+            'collected_items': lambda x, y: x + y
+        }
 
-    def collect_all(self, domain: SparsityMapping, **parameters: dict[str, str]) -> pd.DataFrame:
-        self.collect(self.collectors, domain, **parameters)
-
-    def delete_all(self, domain: SparsityMapping, **parameters) -> None:
-        self.delete(domain, self.collectors, parameters)
-
-    def collect(self, collectors: List[DataCollector], domain: SparsityMapping, **parameters: dict[str, str]) -> pd.DataFrame:
+    def collect(self, collectors: List[DataCollector], **parameters: PARAMSCHEMA) -> pd.DataFrame:
 
         for collector in collectors:
             parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
-            existing_domain = self.metadata.query(parameter_query)['domain']
-            existing_domain = SparsityMapping(unit=self.unit, string=existing_domain)
+            existing_domain = self.metadata.query(parameter_query)
+            existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
-            query_domain = domain - existing_domain
+            query_domain = parameters.domain - existing_domain
 
             for interval in query_domain.get_intervals():
                 self.clear_data()
 
                 # Collector must take interval argument to match schema
-                data = collector.retrieve_data(interval=interval, **parameters)
+                data = collector.retrieve_data(**parameters)
 
                 if not data:
                     self.logger.error(f"Failed to collect data from {collector.name} for {interval} with parameters {parameters}")
@@ -152,19 +181,20 @@ class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema], 
                     self.logger.error(f"Collector {collector.name} returned improperly formatted dataframe for {interval} for parameters {parameters}")
                     continue
                 
-                
-                sparsity_interval = SparsityMapping(unit=self.unit, string=f"/{existing_domain.date_to_str(interval[0])}|{existing_domain.date_to_str(interval[1])}")
-                existing_domain = existing_domain + sparsity_interval
+                meta_info = {
+                    'id': uuid.uuid4(),
+                    'collector': collector.name,
+                    'collected_items': len(data)
+                }
 
-                self.metadata.query(parameter_query)['domain'] = existing_domain.string
-
+                self.update_metadata(parameters, meta_info)
                 self.storage.store_data(self)
 
 
                 
 
-    def delete(self, domain: SparsityMapping, collectors: List[DataCollector], **parameters: dict[str, str]) -> None:
-        for interval in domain.get_intervals():
+    def delete(self, collectors: List[DataCollector], **parameters: PARAMSCHEMA) -> None:
+        for interval in parameters.domain.get_intervals():
             self.clear_data()
             for collector in collectors:
                 parameter_query = ' & '.join([f'{key} == {value}' for key, value in parameters.items()])

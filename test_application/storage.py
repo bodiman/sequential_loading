@@ -67,8 +67,8 @@ class SQLStorage(DataStorage):
         
     @dbsafe  
     def store_data(self, processor: DataProcessor, connection=None) -> None:
-        processor.data.to_sql(processor.name, con=self.engine, index=False)
-        processor.metadata.to_sql(f"{processor.name}_metadata", con=self.engine, index=False)
+        processor.data.to_sql(processor.name, con=self.engine, if_exists="append", index=False)
+        processor.metadata.to_sql(f"{processor.name}_metadata", con=self.engine, if_exists="append", index=False)
 
     @dbsafe
     def retrieve_data(self, processor: DataProcessor, query: str = None, connection=None) -> pd.DataFrame:

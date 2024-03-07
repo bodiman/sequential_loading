@@ -1,3 +1,3 @@
-from storage import WeatherStockLoader
+from sequential_loading.data_storage import SQLStorage
 
-WeatherStockLoader.collect("/2022-01-01|2023-01-01")
+my_storage = SQLStorage("postgresql://bodszab@localhost:5432/teststorage", createdb=True)

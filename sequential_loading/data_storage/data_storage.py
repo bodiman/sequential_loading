@@ -1,4 +1,3 @@
-from sequential_loading.data_processor import DataProcessor
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -34,27 +33,27 @@ delete_processor: (processor: DataProcessor) -> None:
 """
 class DataStorage(ABC):
     @abstractmethod
-    def initialize(self, processor: DataProcessor, **kwargs) -> None:
+    def initialize(self, name: str, data: pd.DataFrame, metadata: pd.DataFrame, **kwargs) -> None:
+        pass
+    
+    @abstractmethod
+    def store_data(self, name: str, data: pd.DataFrame, metadata: pd.DataFrame, **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod
-    def store_data(self, processor: DataProcessor, **kwargs) -> pd.DataFrame:
+    def retrieve_data(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod
-    def retrieve_data(self, processor: DataProcessor, conditions: object = None, **kwargs) -> pd.DataFrame:
+    def retrieve_metadata(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod
-    def retrieve_metadata(self, processor: DataProcessor, conditions: object = None, **kwargs) -> pd.DataFrame:
+    def delete_rows(self, name: str, ids: List[str], **kwargs) -> None:
         pass
 
     @abstractmethod
-    def delete_rows(self, processor: DataProcessor, ids: List[str], **kwargs) -> None:
-        pass
-
-    @abstractmethod
-    def delete_processor(self, processor: DataProcessor, **kwargs) -> None:
+    def delete_processor(self, name: str, **kwargs) -> None:
         pass
 
 
