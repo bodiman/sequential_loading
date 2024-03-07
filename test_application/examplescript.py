@@ -1,3 +1,6 @@
 from sequential_loading.data_storage import SQLStorage
+from sequential_loading.data_collector import DataCollector
+from sequential_loading.data_processor import IntervalProcessor
 
-my_storage = SQLStorage("postgresql://username@localhost:5432/teststorage", createdb=True)
+#plz don't hack me
+my_storage = SQLStorage("postgres://bodszab@localhost:5432/teststorage")
