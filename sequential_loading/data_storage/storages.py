@@ -20,6 +20,7 @@ def dbsafe(func):
     def wrapper(self, *args, **kwargs):
         with self.engine.begin() as connection:
             try:
+                print(args)
                 func(*args, **kwargs, connection=connection)
             except Exception as e:
                 connection.rollback()
@@ -58,7 +59,7 @@ class SQLStorage(DataStorage):
         return cls._connections[url]
     
     @dbsafe
-    def initialize(self, name:str, schema: pd.DataFrame, metadata_schema: pd.DataFrame, connection=None):
+    def initialize(self, name: str, schema: pd.DataFrame, metadata_schema: pd.DataFrame, connection=None):
         if not self.inspecotr.has_table(name):
 
             self.logger.info(f"Creating Table {name}...")

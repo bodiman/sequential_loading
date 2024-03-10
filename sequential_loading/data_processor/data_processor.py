@@ -4,8 +4,9 @@ from sequential_loading.data_collector import DataCollector
 from abc import ABC, abstractmethod
 
 import pandas as pd
+from typedframe import TypedDataFrame
 
-from typing import List, Type, TypedDict, TypeVar, Generic, Callable
+from typing import List, Type, Dict, TypedDict, TypeVar, Generic, Callable, Mapping
 
 import logging
 
@@ -13,20 +14,20 @@ import datetime
 
 import uuid
 
-SCHEMA = TypeVar("SCHEMA")
-PARAMSCHEMA = TypeVar("PARAMSCHEMA")
-METASCHEMA = TypeVar("METASCHEMA")
 
-
-class DataProcessor(ABC, Generic[PARAMSCHEMA, METASCHEMA, SCHEMA]):
-    def __init__(self, storage: DataStorage, collectors: List[DataCollector]):
+class DataProcessor(ABC):
+    def __init__(self, name: str, PARAMSCHEMA: pd.DataFrame, SCHEMA: pd.DataFrame, storage: DataStorage, collectors: List[DataCollector]):
         #convert types into dataframes (schemas)
-        self.paramschema = pd.DataFrame(columns=[param for param in PARAMSCHEMA.__annotations__.keys()], dtypes=[param for param in PARAMSCHEMA.__annotations__.values()])
 
-        self.metaschema = pd.DataFrame(columns=[param for param in METASCHEMA.__annotations__.keys()], dtypes=[param for param in METASCHEMA.__annotations__.values()])
-        self.schema = pd.DataFrame(columns=[param for param in SCHEMA.__annotations__.keys()], dtypes=[param for param in SCHEMA.__annotations__.values()])
+        self.name = name
 
-        self.schema = pd.concat(self.param_schema, self.schema, verify_integrity=True)
+        #defines behavior for cumulatively stored metadata
+        self.update_map = Dict[str, Callable]
+
+        self.paramschema = PARAMSCHEMA
+        self.schema = SCHEMA
+            
+        self.schema = pd.merge(self.paramschema, self.schema)
         
         self.collectors = collectors
 
@@ -44,13 +45,20 @@ class DataProcessor(ABC, Generic[PARAMSCHEMA, METASCHEMA, SCHEMA]):
         self.logger = logging.getLogger(__name__)
 
     """
+    Takes in a dictionary (parameter name) and a schema (dataframe). checks if the keys match and the types are valid.
+
+    """
+    def validate_schema(self, parameter: Type[TypedDataFrame], schema: Type[TypedDataFrame]) -> bool:
+        pass
+
+    """
     This function will be called every time data is collected with parameters.
 
     it will take in a set of parameters and optional metadata. It will use the self.update function to update the metadata and parameters accordingly.
     """
-    def update_metadata(self, parameters: PARAMSCHEMA, info: METASCHEMA = None) -> pd.DataFrame:
+    def update_metadata(self, parameters, info = None) -> Type[TypedDataFrame]:
         #retrieve existing metadata from parameters
-        existing_metadata: pd.DataFrame = self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))
+        existing_metadata: Type[TypedDataFrame] = self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))
 
         if not existing_metadata:
             updated_metadata = self.default_metadata_initialize(parameters, info)
@@ -60,25 +68,22 @@ class DataProcessor(ABC, Generic[PARAMSCHEMA, METASCHEMA, SCHEMA]):
             updater = self.update_map.get(key, self.default_metadata_update)
             existing_metadata[key] = updater(value, existing_metadata[key])
 
+        self.storage.store_metadata(self.name, existing_metadata)
         return existing_metadata
     
-    def default_metadata_update(self, parameters: PARAMSCHEMA, info: METASCHEMA = None) -> pd.DataFrame:
+    def default_metadata_update(self, parameters, info) -> Type[TypedDataFrame]:
         return pd.DataFrame({**parameters, **info})
     
-    def default_metadata_initialize(self, parameters: PARAMSCHEMA, info: METASCHEMA = None,) -> pd.DataFrame:
+    def default_metadata_initialize(self, parameters, info = None) -> Type[TypedDataFrame]:
         self.metadata[self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))] = info
         return self.metadata
-
-    @abstractmethod
-    def configure_update_map(self) -> dict[str, callable]:
-        return {} #empty update map by default
     
     @abstractmethod
-    def collect(self, parameters: PARAMSCHEMA, collectors: List[DataCollector]) -> pd.DataFrame:
+    def collect(self, parameters, collectors: List[DataCollector]) -> Type[TypedDataFrame]:
         pass
 
     @abstractmethod
-    def delete(self, parameters: PARAMSCHEMA, collectors: List[DataCollector]) -> pd.DataFrame:
+    def delete(self, parameters, collectors: List[DataCollector]) -> Type[TypedDataFrame]:
         pass
 
 

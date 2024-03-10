@@ -1,46 +1,37 @@
-from sequential_loading.data_processor.data_processor import DataProcessor, SCHEMA
+from sequential_loading.data_processor.data_processor import DataProcessor
 from sequential_loading.data_storage.data_storage import DataStorage
 from sequential_loading.data_collector import DataCollector
 
 from sequential_loading.sparsity_mapping import SparsityMappingString
-from typing import List, TypedDict, Generic
+from typing import List, Type
 
 import uuid
 import datetime
 import pandas as pd
+from typedframe import TypedDataFrame
 
-class IntervalParamSchema(TypedDict):
-        ticker: str
-        domain: str
+class IntervalMetaSchema(TypedDataFrame):
+    schema = { 
+        "domain": str,
+        "collected_items": int
+    }
 
-class IntervalMetaSchema(TypedDict):
-    id: str
-    collector: str
-    collected_items: int
 
-class EODSchema(TypedDict):
-    id: str
-    date: datetime.datetime
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
+class IntervalProcessor(DataProcessor):
 
-class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema, SCHEMA], Generic[SCHEMA]):
+    metaschema = IntervalMetaSchema()
 
-    def __init__(self, storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
-        super().__init__(storage, collectors)
+    def __init__(self, name: str, PARAMSCHEMA: Type[TypedDataFrame], METASCHEMA: Type[TypedDataFrame], SCHEMA: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
+        super().__init__(name, PARAMSCHEMA, SCHEMA, storage, collectors)
 
         self.unit = unit
 
-    def configure_update_map(self) -> dict[str, callable]:
-        return {
+        self.update_map = {
             'domain': lambda x, y: SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y),
             'collected_items': lambda x, y: x + y
         }
 
-    def collect(self, collectors: List[DataCollector], **parameters: IntervalParamSchema) -> pd.DataFrame:
+    def collect(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> pd.DataFrame:
 
         for collector in collectors:
             parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
@@ -59,7 +50,8 @@ class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema, S
                     self.logger.error(f"Failed to collect data from {collector.name} for {interval} with parameters {parameters}")
                     continue
 
-                try:  
+                try:
+                    #verify_integrity=True ensures that the parameters match the schema
                     self.data = pd.concat(self.data, data, verify_integrity=True)
 
                 except Exception as e:
@@ -76,7 +68,7 @@ class IntervalProcessor(DataProcessor[IntervalParamSchema, IntervalMetaSchema, S
                 self.storage.store_data(self)
                 
 
-    def delete(self, collectors: List[DataCollector], **parameters: IntervalParamSchema) -> None:
+    def delete(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> None:
         for interval in parameters.domain.get_intervals():
             self.clear_data()
             for collector in collectors:
