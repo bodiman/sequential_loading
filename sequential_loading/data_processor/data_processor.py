@@ -16,23 +16,23 @@ import uuid
 
 
 class DataProcessor(ABC):
-    def __init__(self, name: str, PARAMSCHEMA: pd.DataFrame, SCHEMA: pd.DataFrame, storage: DataStorage, collectors: List[DataCollector]):
+    def __init__(self, name: str, paramschema: pd.DataFrame, schema: pd.DataFrame, metaschema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector]):
         #convert types into dataframes (schemas)
-
+        print(paramschema.schema)
         self.name = name
 
         #defines behavior for cumulatively stored metadata
         self.update_map = Dict[str, Callable]
 
-        self.paramschema = PARAMSCHEMA
-        self.schema = SCHEMA
-            
-        self.schema = pd.merge(self.paramschema, self.schema)
+        self.metaschema = metaschema
+
+        self.schema = type('ProcessorSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **schema.schema}})
+        self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
         
         self.collectors = collectors
 
-        self.data: pd.DataFrame = self.schema
-        self.metadata: pd.DataFrame = self.metaschema
+        # self.data: pd.DataFrame = self.schema(self.schema.schema)
+        # self.metadata: pd.DataFrame = self.metaschema(self.metaschema.schema)
 
         self.storage: DataStorage = storage
         self.storage.initialize(self.name, self.schema, self.metaschema)
@@ -43,13 +43,6 @@ class DataProcessor(ABC):
         self.update_map = self.configure_update_map()
 
         self.logger = logging.getLogger(__name__)
-
-    """
-    Takes in a dictionary (parameter name) and a schema (dataframe). checks if the keys match and the types are valid.
-
-    """
-    def validate_schema(self, parameter: Type[TypedDataFrame], schema: Type[TypedDataFrame]) -> bool:
-        pass
 
     """
     This function will be called every time data is collected with parameters.

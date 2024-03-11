@@ -33,15 +33,17 @@ class EODParamSchema(TypedDataFrame):
 
 class EODSchema(TypedDataFrame):
     schema = {
-        "id": str, 
-        "date": DATE_TIME_DTYPE, 
-        "open": np.float64, 
-        "high": np.float64, 
-        "low": np.float64, 
-        "close": np.float64, 
+        "id": str,
+        "date": DATE_TIME_DTYPE,
+        "open": np.float64,
+        "high": np.float64,
+        "low": np.float64,
+        "close": np.float64,
         "volume": np.float64
     }
 
+print(EODParamSchema.schema)
+
 collector = DataCollector("TIINGO")
 
-processor = IntervalProcessor("stock_processor", EODParamSchema, EODMetaSchema, EODSchema, my_storage, [collector], unit="day")
+processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, [collector], unit="day")

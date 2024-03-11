@@ -11,6 +11,7 @@ import functools
 
 from typing import Type, List
 import pandas as pd
+from typedframe import TypedDataFrame
 import datetime
 
 import logging
@@ -20,8 +21,7 @@ def dbsafe(func):
     def wrapper(self, *args, **kwargs):
         with self.engine.begin() as connection:
             try:
-                print(args)
-                func(*args, **kwargs, connection=connection)
+                func(self, *args, **kwargs, connection=connection)
             except Exception as e:
                 connection.rollback()
                 logging.error(f"Failed to create Database: {e}")
@@ -59,13 +59,19 @@ class SQLStorage(DataStorage):
         return cls._connections[url]
     
     @dbsafe
-    def initialize(self, name: str, schema: pd.DataFrame, metadata_schema: pd.DataFrame, connection=None):
-        if not self.inspecotr.has_table(name):
+    def create_table(self, name: str, tableschema: Type[TypedDataFrame], connection=None):
+        columns = ', '.join(f'{name} {dtype}' for name, dtype in tableschema.schema.items())
+        query = text(f'CREATE TABLE {name} ({columns})')
+        connection.execute(query)
+    
+    @dbsafe
+    def initialize(self, name: str, schema: Type[TypedDataFrame], metadata_schema: Type[TypedDataFrame], connection=None):
+        if not self.inspector.has_table(name):
 
             self.logger.info(f"Creating Table {name}...")
 
-            schema.tosql(name, con=connection, dtype=schema.dtypes, index=False)
-            metadata_schema.to_sql(f"{name}_metadata")
+            self.create_table(name, schema)
+            self.create_table(f"{name}_metadata", metadata_schema)
 
             self.logger.info(f"Created Table {name}")
 

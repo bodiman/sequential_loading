@@ -19,10 +19,10 @@ class IntervalMetaSchema(TypedDataFrame):
 
 class IntervalProcessor(DataProcessor):
 
-    metaschema = IntervalMetaSchema()
+    metaschema = IntervalMetaSchema
 
-    def __init__(self, name: str, PARAMSCHEMA: Type[TypedDataFrame], METASCHEMA: Type[TypedDataFrame], SCHEMA: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
-        super().__init__(name, PARAMSCHEMA, SCHEMA, storage, collectors)
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
+        super().__init__(name, paramschema, schema, self.metaschema, storage, collectors)
 
         self.unit = unit
 
