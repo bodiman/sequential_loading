@@ -9,9 +9,10 @@ from sqlalchemy_utils import database_exists, create_database
 
 import functools
 
-from typing import Type, List
+from typing import Type, List, Union
 import pandas as pd
-from typedframe import TypedDataFrame
+import numpy as np
+from typedframe import TypedDataFrame, DATE_TIME_DTYPE
 import datetime
 
 import logging
@@ -31,6 +32,15 @@ def dbsafe(func):
 
 class SQLStorage(DataStorage):
     _connections = {}
+
+    type_mapping = {
+        int: 'INTEGER',
+        float: 'REAL',
+        str: 'TEXT',
+        bool: 'INTEGER',  # SQLite uses 0 and 1 for boolean values
+        np.float64: 'REAL',
+        DATE_TIME_DTYPE: 'TIMESTAMP'
+    }
 
 
     def __init__(self, url: str, createdb: bool = False):
@@ -60,7 +70,7 @@ class SQLStorage(DataStorage):
     
     @dbsafe
     def create_table(self, name: str, tableschema: Type[TypedDataFrame], connection=None):
-        columns = ', '.join(f'{name} {dtype}' for name, dtype in tableschema.schema.items())
+        columns = ', '.join(f'{name} {self.type_mapping[dtype]}' for name, dtype in tableschema.schema.items())
         query = text(f'CREATE TABLE {name} ({columns})')
         connection.execute(query)
     
