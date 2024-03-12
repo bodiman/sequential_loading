@@ -42,7 +42,6 @@ class EODSchema(TypedDataFrame):
         "volume": np.float64
     }
 
-print(EODParamSchema.schema)
 
 collector = DataCollector("TIINGO")
 

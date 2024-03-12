@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
 import pandas as pd
+from typedframe import TypedDataFrame
 
-from typing import List
+from typing import List, Type
 
 
 """
@@ -33,7 +34,7 @@ delete_processor: (processor: DataProcessor) -> None:
 """
 class DataStorage(ABC):
     @abstractmethod
-    def initialize(self, name: str, data: pd.DataFrame, metadata: pd.DataFrame, **kwargs) -> None:
+    def initialize(self, name: str, data: Type[TypedDataFrame], **kwargs) -> None:
         pass
     
     @abstractmethod
@@ -42,10 +43,6 @@ class DataStorage(ABC):
 
     @abstractmethod
     def retrieve_data(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
-        pass
-
-    @abstractmethod
-    def retrieve_metadata(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod

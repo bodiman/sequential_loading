@@ -75,13 +75,12 @@ class SQLStorage(DataStorage):
         connection.execute(query)
     
     @dbsafe
-    def initialize(self, name: str, schema: Type[TypedDataFrame], metadata_schema: Type[TypedDataFrame], connection=None):
+    def initialize(self, name: str, schema: Type[TypedDataFrame], connection=None):
         if not self.inspector.has_table(name):
 
             self.logger.info(f"Creating Table {name}...")
 
             self.create_table(name, schema)
-            self.create_table(f"{name}_metadata", metadata_schema)
 
             self.logger.info(f"Created Table {name}")
 
@@ -106,14 +105,6 @@ class SQLStorage(DataStorage):
         data = connection.execute(select_statement).fetchall()
 
         return pd.DataFrame(data)
-    
-    def retrieve_metadata(self, name: str, connection=None) -> pd.DataFrame:
-        table = self.metadata.tables.get(f"{name}_metadata")
-        select_statement = table.select()
-
-        metadata = connection.execute(select_statement).fetchall()
-
-        return pd.DataFrame(metadata)
     
     @dbsafe
     def delete_rows(self, name: str, uuids: List[str], connection=None) -> None:

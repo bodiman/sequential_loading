@@ -18,7 +18,6 @@ import uuid
 class DataProcessor(ABC):
     def __init__(self, name: str, paramschema: pd.DataFrame, schema: pd.DataFrame, metaschema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector]):
         #convert types into dataframes (schemas)
-        print(paramschema.schema)
         self.name = name
 
         #defines behavior for cumulatively stored metadata
@@ -26,50 +25,26 @@ class DataProcessor(ABC):
 
         self.metaschema = metaschema
 
-        self.schema = type('ProcessorSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **schema.schema}})
-        self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
+        self.paramschema = paramschema
+        self.schema = type('ProcessorSchema', (paramschema, schema), {})
+        self.metaschema = type('ProcessorMetaSchema', (paramschema, metaschema), {})
         
         self.collectors = collectors
 
-        # self.data: pd.DataFrame = self.schema(self.schema.schema)
-        # self.metadata: pd.DataFrame = self.metaschema(self.metaschema.schema)
-
         self.storage: DataStorage = storage
-        self.storage.initialize(self.name, self.schema, self.metaschema)
+        self.storage.initialize(self.name, self.schema)
+        self.storage.initialize(f"{self.name}_metadata", self.metaschema)
 
-        metadata = self.storage.retrieve_metadata(self)
-        self.metadata = pd.concat(self.metadata, metadata, verify_integrity=True)
-
-        self.update_map = self.configure_update_map()
+        metadata = self.storage.retrieve_data(f"{self.name}_metadata")
+        if metadata:
+            self.metadata = metaschema(metadata)
 
         self.logger = logging.getLogger(__name__)
 
-    """
-    This function will be called every time data is collected with parameters.
-
-    it will take in a set of parameters and optional metadata. It will use the self.update function to update the metadata and parameters accordingly.
-    """
-    def update_metadata(self, parameters, info = None) -> Type[TypedDataFrame]:
-        #retrieve existing metadata from parameters
-        existing_metadata: Type[TypedDataFrame] = self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))
-
-        if not existing_metadata:
-            updated_metadata = self.default_metadata_initialize(parameters, info)
-            return updated_metadata
-
-        for key, value in {**parameters, **info}.items():
-            updater = self.update_map.get(key, self.default_metadata_update)
-            existing_metadata[key] = updater(value, existing_metadata[key])
-
-        self.storage.store_metadata(self.name, existing_metadata)
-        return existing_metadata
-    
-    def default_metadata_update(self, parameters, info) -> Type[TypedDataFrame]:
-        return pd.DataFrame({**parameters, **info})
-    
-    def default_metadata_initialize(self, parameters, info = None) -> Type[TypedDataFrame]:
-        self.metadata[self.metadata.query(' & '.join([f'{key} == {value}' for key, value in parameters.items()]))] = info
-        return self.metadata
+    "Returns updated metadata"
+    @abstractmethod
+    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type[TypedDataFrame]:
+        pass
     
     @abstractmethod
     def collect(self, parameters, collectors: List[DataCollector]) -> Type[TypedDataFrame]:

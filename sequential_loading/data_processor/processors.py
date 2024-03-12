@@ -30,6 +30,9 @@ class IntervalProcessor(DataProcessor):
             'domain': lambda x, y: SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y),
             'collected_items': lambda x, y: x + y
         }
+    
+    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type:
+        return 
 
     def collect(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> pd.DataFrame:
 
