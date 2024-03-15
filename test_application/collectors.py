@@ -8,6 +8,8 @@ from io import StringIO
 
 import uuid
 
+from typing import Tuple
+
 #EOD Collectors
 
 # class tiingoCollector(DataCollector):
@@ -28,19 +30,16 @@ class tiingoCollector(DataCollector):
         }
         
 
-    def retrieve_data(self, domain, ticker, resample_freq=None):
+    def retrieve_data(self, interval: Tuple[str, str], ticker, resample_freq=None):
         if resample_freq is None:
             resample_freq = self.resample_map["day"]
-
-        domain = SparsityMappingString(unit=resample_freq, string=domain)
-        intervals = domain.get_str_intervals()[0]
 
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Token {self.api_key}'
         }
 
-        response = httpx.get(f"https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate={intervals[0]}&endDate={intervals[1]}&resampleFreq={self.resample_map[resample_freq]}&format=csv", headers=headers)
+        response = httpx.get(f"https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate={interval[0]}&endDate={interval[1]}&resampleFreq={self.resample_map[resample_freq]}&format=csv", headers=headers)
         if response.is_error or "Error" in response.text:
             return f'Failed to retrieve data for {ticker} with the following response: "{response.text}".'
 

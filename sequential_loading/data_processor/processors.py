@@ -31,51 +31,72 @@ class IntervalProcessor(DataProcessor):
             'collected_items': lambda x, y: x + y
         }
     
-    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type:
-        if self.metadata is None:
-            self.metadata = metadata
-            return self.metadata
-        metadata = self.metadata.query(parameters)
+    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
+        #cache metadata to avoid unnecessary queries to storage
+        if self.cached_metadata is None:
+            self.cached_metadata = metadata
+            return
+        
+        parameter_query = self.format_query(**parameters)
+        cached_metadata = self.metadata.query(parameter_query) if self.metadata else None
+        
+        for key, value in self.update_map.items():
+            cached_metadata[key] = value(cached_metadata[key], metadata[key])
+        
+        self.cached_metadata.loc[self.cached_metadata.eval(parameter_query)] = cached_metadata
+
+    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:        
+        data = pd.concat([self.data, data], verify_integrity=True)
+        data = self.schema(data)
+
+        self.data = data
 
     def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
         domain_sms = SparsityMappingString(unit=self.unit, string=domain)
 
         for collector in collectors:
-            parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
+            parameter_query = self.format_query(**parameters)
+            existing_domain = self.metadata.query(parameter_query)['domain'] if self.metadata else None
 
-            existing_domain = self.metadata.query(parameter_query) if self.metadata else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
             query_domain = domain_sms - existing_domain
 
-            for interval in query_domain.get_intervals():
+            for interval, str_interval in zip(query_domain.get_intervals(), query_domain.get_str_intervals()):
                 # Collector must take interval argument to match schema
-                data = collector.retrieve_data(domain=interval, resample_freq=self.unit, **parameters)
+                data = collector.retrieve_data(interval=str_interval, resample_freq=self.unit, **parameters)
 
                 try:
-                    print(data)
                     #set parameters for data
-                    data['ticker'] = [parameters["ticker"] for _ in range(len(data))]
-                    data['collector'] = [collector.name for _ in range(len(data))]
+                    param_update = pd.DataFrame({
+                        "ticker": [parameters["ticker"] for _ in range(len(data))],
+                        "collector": [collector.name for _ in range(len(data))]
+                    })
+
+                    data = pd.concat([data, param_update], axis=1)
+
+                    metadata = pd.DataFrame({
+                        'collector': [collector.name],
+                        'collected_items': [len(data)]
+                    })
+                    
+                    print(data) 
+                    print(metadata)
 
                     #validate against schema
                     data = self.schema(data)
 
+                    #breaking here currently
+                    metadata = self.metaschema(metadata)
+
+                    self.update_metadata(parameters, metadata)
+                    self.update_data(parameters, data)
+
+                    self.storage.store_data(self.name, self.data)
+                    self.storage.store_data(f"{self.name}_metadata", metadata)         
+
                 except Exception as e:
                     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
-                    continue
-                
-                print(interval)
-                metadata = {
-                    'domain': interval,
-                    'id': uuid.uuid4(),
-                    'collector': collector.name,
-                    'collected_items': len(data)
-                }
-
-                self.update_metadata(parameters, metadata)
-                self.storage.store_data(self.name, self.data)
-                self.storage.store_data(f"{self.name}_metadata", metadata)
                 
 
     def delete(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> None:

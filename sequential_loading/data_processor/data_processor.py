@@ -41,17 +41,22 @@ class DataProcessor(ABC):
 
         self.logger = logging.getLogger(__name__)
 
-    "Returns updated metadata"
+    "Get cached metadata"
+    def format_query(self, **parameters) -> str:
+        parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
+        return parameter_query
+
+    "Updates metadata"
     @abstractmethod
-    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type[TypedDataFrame]:
+    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
         pass
     
     @abstractmethod
-    def collect(self, parameters, collectors: List[DataCollector]) -> Type[TypedDataFrame]:
+    def collect(self, collectors: List[DataCollector], **parameters) -> Type[TypedDataFrame]:
         pass
 
     @abstractmethod
-    def delete(self, parameters, collectors: List[DataCollector]) -> Type[TypedDataFrame]:
+    def delete(self, collectors: List[DataCollector], **parameters) -> Type[TypedDataFrame]:
         pass
 
 
