@@ -21,7 +21,7 @@ class IntervalProcessor(DataProcessor):
 
     metaschema = IntervalMetaSchema
 
-    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector], unit: str) -> None:
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, unit: str, collectors: List[DataCollector] = None) -> None:
         super().__init__(name, paramschema, schema, self.metaschema, storage, collectors)
 
         self.unit = unit
@@ -32,43 +32,46 @@ class IntervalProcessor(DataProcessor):
         }
     
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type:
-        return 
+        metadata = self.metadata.query(parameters)
 
-    def collect(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> pd.DataFrame:
+    def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
+        domain_sms = SparsityMappingString(unit=self.unit, string=domain)
 
         for collector in collectors:
             parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
-            existing_domain = self.metadata.query(parameter_query)
+
+            existing_domain = self.metadata.query(parameter_query) if self.metadata else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
-            query_domain = parameters.domain - existing_domain
+            query_domain = domain_sms - existing_domain
 
             for interval in query_domain.get_intervals():
-                self.clear_data()
-
                 # Collector must take interval argument to match schema
-                data = collector.retrieve_data(**parameters)
+                data = collector.retrieve_data(domain=domain, resample_freq=self.unit, **parameters)
 
-                if not data:
+                if data is None:
                     self.logger.error(f"Failed to collect data from {collector.name} for {interval} with parameters {parameters}")
                     continue
 
                 try:
                     #verify_integrity=True ensures that the parameters match the schema
-                    self.data = pd.concat(self.data, data, verify_integrity=True)
+                    print(data)
+                    self.data = self.schema(data)
 
                 except Exception as e:
-                    self.logger.error(f"Collector {collector.name} returned improperly formatted dataframe for {interval} for parameters {parameters}")
+                    print(e)
+                    # self.logger.error(f"Collector {collector.name} returned improperly formatted dataframe for {interval} for parameters {parameters}")
                     continue
                 
-                meta_info = {
+                metadata = {
                     'id': uuid.uuid4(),
                     'collector': collector.name,
                     'collected_items': len(data)
                 }
 
-                self.update_metadata(parameters, meta_info)
-                self.storage.store_data(self)
+                self.update_metadata(parameters, metadata)
+                self.storage.store_data(self.name, self.data)
+                self.storage.store_data(f"{self.name}_metadata", metadata)
                 
 
     def delete(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> None:

@@ -2,12 +2,23 @@ from sequential_loading.data_storage import SQLStorage
 from sequential_loading.data_collector import DataCollector
 from sequential_loading.data_processor import IntervalProcessor
 
+from test_application.collectors import tiingoCollector
+
 import datetime
 
 from typedframe import TypedDataFrame, DATE_TIME_DTYPE
 import pandas as pd
 
 import numpy as np
+
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Access the API_KEY environment variable
+api_key = os.getenv('TIINGO_API_KEY')
 
 #plz don't hack me
 my_storage = SQLStorage("postgresql://bodszab@localhost:5432/teststorage")
@@ -43,6 +54,7 @@ class EODSchema(TypedDataFrame):
     }
 
 
-collector = DataCollector("TIINGO")
+tiingo_collector = tiingoCollector("TIINGO", api_key=api_key)
 
-processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, [collector], unit="day")
+processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="day")
+processor.collect([tiingo_collector], ticker="AAPL", domain="/2020-01-01|2021-01-01")

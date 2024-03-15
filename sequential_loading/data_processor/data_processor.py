@@ -35,9 +35,9 @@ class DataProcessor(ABC):
         self.storage.initialize(self.name, self.schema)
         self.storage.initialize(f"{self.name}_metadata", self.metaschema)
 
-        metadata = self.storage.retrieve_data(f"{self.name}_metadata")
-        if metadata:
-            self.metadata = metaschema(metadata)
+        self.metadata = self.storage.retrieve_data(f"{self.name}_metadata")
+        if self.metadata:
+            self.metadata = metaschema(self.metadata)
 
         self.logger = logging.getLogger(__name__)
 
