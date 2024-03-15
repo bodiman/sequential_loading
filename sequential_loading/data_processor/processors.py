@@ -32,6 +32,9 @@ class IntervalProcessor(DataProcessor):
         }
     
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> Type:
+        if self.metadata is None:
+            self.metadata = metadata
+            return self.metadata
         metadata = self.metadata.query(parameters)
 
     def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
@@ -47,28 +50,24 @@ class IntervalProcessor(DataProcessor):
 
             for interval in query_domain.get_intervals():
                 # Collector must take interval argument to match schema
-                data = collector.retrieve_data(domain=domain, resample_freq=self.unit, **parameters)
-
-                if data is None:
-                    self.logger.error(f"Failed to collect data from {collector.name} for {interval} with parameters {parameters}")
-                    continue
+                data = collector.retrieve_data(domain=interval, resample_freq=self.unit, **parameters)
 
                 try:
                     print(data)
                     #set parameters for data
-                        #maybe this could be done with a decorator design pattern in the future?
                     data['ticker'] = [parameters["ticker"] for _ in range(len(data))]
                     data['collector'] = [collector.name for _ in range(len(data))]
 
                     #validate against schema
-                    self.data = self.schema(data)
+                    data = self.schema(data)
 
                 except Exception as e:
-                    print(e)
-                    # self.logger.error(f"Collector {collector.name} returned improperly formatted dataframe for {interval} for parameters {parameters}")
+                    self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
                     continue
                 
+                print(interval)
                 metadata = {
+                    'domain': interval,
                     'id': uuid.uuid4(),
                     'collector': collector.name,
                     'collected_items': len(data)
