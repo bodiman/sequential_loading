@@ -54,8 +54,13 @@ class IntervalProcessor(DataProcessor):
                     continue
 
                 try:
-                    #verify_integrity=True ensures that the parameters match the schema
                     print(data)
+                    #set parameters for data
+                        #maybe this could be done with a decorator design pattern in the future?
+                    data['ticker'] = [parameters["ticker"] for _ in range(len(data))]
+                    data['collector'] = [collector.name for _ in range(len(data))]
+
+                    #validate against schema
                     self.data = self.schema(data)
 
                 except Exception as e:

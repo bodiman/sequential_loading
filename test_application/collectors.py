@@ -46,18 +46,13 @@ class tiingoCollector(DataCollector):
 
         df = pd.read_csv(StringIO(response.text), sep=",")
 
-        df = df.rename(columns={
-            'date': 'date',
-            'adjVolume': 'volume',
-            'adjClose': 'close',
-            'adjHigh': 'high',
-            'adjLow': 'low',
-            'adjOpen': 'open',
-        })
-        df['ticker'] = ticker
-        df['resample_freq'] = resample_freq
+        #add id column
         df['id'] = [uuid.uuid4() for _ in range(len(df))]
         df = df[['id', 'date', 'open', 'high', 'low', 'close', 'volume']]
+
+        #convert datatypes
+        df.date = pd.to_datetime(df.date)
+        df.volume = df.volume.astype(float)
 
         return df
     
