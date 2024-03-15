@@ -39,6 +39,9 @@ class DataProcessor(ABC):
         if self.metadata:
             self.metadata = metaschema(self.metadata)
 
+        self.data: Type[TypedDataFrame] = None
+        self.cached_metadata: Type[TypedDataFrame] = None
+
         self.logger = logging.getLogger(__name__)
 
     "Get cached metadata"

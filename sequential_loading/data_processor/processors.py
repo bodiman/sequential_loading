@@ -32,10 +32,12 @@ class IntervalProcessor(DataProcessor):
         }
     
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
+        self.metaschema(metadata)
+
         #cache metadata to avoid unnecessary queries to storage
         if self.cached_metadata is None:
             self.cached_metadata = metadata
-            return
+            return metadata
         
         parameter_query = self.format_query(**parameters)
         cached_metadata = self.metadata.query(parameter_query) if self.metadata else None
@@ -45,11 +47,14 @@ class IntervalProcessor(DataProcessor):
         
         self.cached_metadata.loc[self.cached_metadata.eval(parameter_query)] = cached_metadata
 
-    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:        
-        data = pd.concat([self.data, data], verify_integrity=True)
-        data = self.schema(data)
+        return cached_metadata
 
+    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:        
+        data = pd.concat([parameters, data])
+        self.schema(data)
         self.data = data
+
+        return self.data
 
     def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
         domain_sms = SparsityMappingString(unit=self.unit, string=domain)
@@ -68,32 +73,28 @@ class IntervalProcessor(DataProcessor):
 
                 try:
                     #set parameters for data
-                    param_update = pd.DataFrame({
+                    data_params = pd.DataFrame({
                         "ticker": [parameters["ticker"] for _ in range(len(data))],
                         "collector": [collector.name for _ in range(len(data))]
                     })
 
-                    data = pd.concat([data, param_update], axis=1)
+                    metadata_params = pd.DataFrame({
+                        "domain": ["test"],
+                        "collected_items": [len(data)]
+                    })
 
                     metadata = pd.DataFrame({
                         'collector': [collector.name],
                         'collected_items': [len(data)]
                     })
-                    
-                    print(data) 
-                    print(metadata)
 
-                    #validate against schema
-                    data = self.schema(data)
+                    print(metadata_params)
 
-                    #breaking here currently
-                    metadata = self.metaschema(metadata)
+                    #updates, validates, and caches data and metadata
+                    data = self.update_data(data_params, data)
+                    metadata = self.update_metadata(metadata_params, metadata)  
 
-                    self.update_metadata(parameters, metadata)
-                    self.update_data(parameters, data)
-
-                    self.storage.store_data(self.name, self.data)
-                    self.storage.store_data(f"{self.name}_metadata", metadata)         
+                    self.storage.store_data(self.name, self.data, metadata)       
 
                 except Exception as e:
                     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
