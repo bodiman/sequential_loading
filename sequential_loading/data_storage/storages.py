@@ -25,7 +25,7 @@ def dbsafe(func):
                 func(self, *args, **kwargs, connection=connection)
             except Exception as e:
                 connection.rollback()
-                logging.error(f"Failed to create Database: {e}")
+                logging.error(f"Database query failed: {e}")
 
     return wrapper
 

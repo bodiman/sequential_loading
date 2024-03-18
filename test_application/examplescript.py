@@ -21,7 +21,7 @@ load_dotenv()
 api_key = os.getenv('TIINGO_API_KEY')
 
 #plz don't hack me
-my_storage = SQLStorage("postgresql://bodszab@localhost:5432/teststorage")
+my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage", createdb=True)
 
 # Each datapoint has a corresponding set of parameters that are not necessarily unique.
 # Each set of parameters has a corresponding set of metadata that is unique.
@@ -58,3 +58,4 @@ tiingo_collector = tiingoCollector("TIINGO", api_key=api_key)
 
 processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="day")
 processor.collect([tiingo_collector], ticker="AAPL", domain="/2020-01-01|2021-01-01")
+processor.collect([tiingo_collector], ticker="AAPL", domain="/2019-01-01|2019-02-01")

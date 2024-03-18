@@ -32,6 +32,7 @@ class IntervalProcessor(DataProcessor):
         }
     
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
+        metadata = pd.concat([parameters, metadata], axis=1)
         self.metaschema(metadata)
 
         #cache metadata to avoid unnecessary queries to storage
@@ -39,6 +40,7 @@ class IntervalProcessor(DataProcessor):
             self.cached_metadata = metadata
             return metadata
         
+        #query formatting is broken. Need to fix
         parameter_query = self.format_query(**parameters)
         cached_metadata = self.metadata.query(parameter_query) if self.metadata else None
         
@@ -49,8 +51,8 @@ class IntervalProcessor(DataProcessor):
 
         return cached_metadata
 
-    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:        
-        data = pd.concat([parameters, data])
+    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:  
+        data = pd.concat([parameters, data], axis=1)
         self.schema(data)
         self.data = data
 
@@ -69,35 +71,37 @@ class IntervalProcessor(DataProcessor):
 
             for interval, str_interval in zip(query_domain.get_intervals(), query_domain.get_str_intervals()):
                 # Collector must take interval argument to match schema
+
+                #need to add error handling here. If collector fails, it should not stop the entire process.
                 data = collector.retrieve_data(interval=str_interval, resample_freq=self.unit, **parameters)
 
-                try:
+                # try:
                     #set parameters for data
-                    data_params = pd.DataFrame({
-                        "ticker": [parameters["ticker"] for _ in range(len(data))],
-                        "collector": [collector.name for _ in range(len(data))]
-                    })
+                data_params = pd.DataFrame({
+                    "ticker": [parameters["ticker"] for _ in range(len(data))],
+                    "collector": [collector.name for _ in range(len(data))]
+                })
 
-                    metadata_params = pd.DataFrame({
-                        "domain": ["test"],
-                        "collected_items": [len(data)]
-                    })
+                metadata_params = pd.DataFrame({
+                    "ticker": [parameters["ticker"]],
+                    "collector": [collector.name]
+                })
 
-                    metadata = pd.DataFrame({
-                        'collector': [collector.name],
-                        'collected_items': [len(data)]
-                    })
+                metadata = pd.DataFrame({
+                    'domain': [f'/{str_interval[0]}|{str_interval[1]}'],
+                    'collected_items': [len(data)]
+                })
+                metadata.collected_items = metadata.collected_items.astype(int)
 
-                    print(metadata_params)
 
-                    #updates, validates, and caches data and metadata
-                    data = self.update_data(data_params, data)
-                    metadata = self.update_metadata(metadata_params, metadata)  
+                #updates, validates, and caches data and metadata
+                data = self.update_data(data_params, data)
+                metadata = self.update_metadata(metadata_params, metadata) 
 
-                    self.storage.store_data(self.name, self.data, metadata)       
+                self.storage.store_data(self.name, self.data, metadata)       
 
-                except Exception as e:
-                    self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
+                # except Exception as e:
+                #     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
                 
 
     def delete(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> None:

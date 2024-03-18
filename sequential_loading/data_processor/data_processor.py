@@ -16,7 +16,7 @@ import uuid
 
 
 class DataProcessor(ABC):
-    def __init__(self, name: str, paramschema: pd.DataFrame, schema: pd.DataFrame, metaschema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector]):
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], metaschema: Type[TypedDataFrame], storage: DataStorage, collectors: List[DataCollector]):
         #convert types into dataframes (schemas)
         self.name = name
 
@@ -26,8 +26,8 @@ class DataProcessor(ABC):
         self.metaschema = metaschema
 
         self.paramschema = paramschema
-        self.schema = type('ProcessorSchema', (paramschema, schema), {})
-        self.metaschema = type('ProcessorMetaSchema', (paramschema, metaschema), {})
+        self.schema = type('ProcessorSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **schema.schema}})
+        self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
         
         self.collectors = collectors
 
