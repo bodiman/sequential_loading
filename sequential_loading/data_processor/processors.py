@@ -68,8 +68,8 @@ class IntervalProcessor(DataProcessor):
         for collector in collectors:
             parameter_query = self.format_query(**parameters)
             existing_domain = self.cached_metadata.query(parameter_query).iloc[0]['domain'] if self.cached_metadata is not None else None
-
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
+
 
             query_domain = domain_sms - existing_domain
 
@@ -106,20 +106,16 @@ class IntervalProcessor(DataProcessor):
 
                 #updates, validates, and caches data and metadata
                 data = self.update_data(data_params, data)
-                print("ran 1")
-                print(data)
                 metadata = self.update_metadata(metadata_params, metadata) 
-
-                print("ran 2")
-                print(metadata)
-
-                self.storage.store_data(self.name, self.data, metadata)       
+                
+                self.storage.store_data(self.name, data, metadata)       
 
                 # except Exception as e:
                 #     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
                 
 
     def delete(self, collectors: List[DataCollector], **parameters: Type[TypedDataFrame]) -> None:
+        #this doesn't work yet
         for interval in parameters.domain.get_intervals():
             self.clear_data()
             for collector in collectors:

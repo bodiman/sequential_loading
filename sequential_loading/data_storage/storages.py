@@ -22,7 +22,7 @@ def dbsafe(func):
     def wrapper(self, *args, **kwargs):
         with self.engine.begin() as connection:
             try:
-                func(self, *args, **kwargs, connection=connection)
+                return func(self, *args, **kwargs, connection=connection)
             except Exception as e:
                 connection.rollback()
                 raise Exception(e)
@@ -73,7 +73,7 @@ class SQLStorage(DataStorage):
         columns = ', '.join(f'{name} {self.type_mapping[dtype]}' for name, dtype in tableschema.schema.items())
         primary_keys_string = ', PRIMARY KEY (' + ', '.join(primary_keys) + ')' if primary_keys else ''
 
-        query = text(f'CREATE TABLE {name} ({columns}' + primary_keys_string)
+        query = text(f'CREATE TABLE {name} ({columns} {primary_keys_string})')
         connection.execute(query)
     
     @dbsafe
@@ -92,7 +92,7 @@ class SQLStorage(DataStorage):
     @dbsafe  
     def store_data(self, name:str, data: pd.DataFrame, metadata: pd.DataFrame, connection=None) -> None:
         data.to_sql(name, con=self.engine, if_exists="append", index=False)
-        metadata.to_sql(f"{name}_metadata", con=self.engine, if_exists="append", index=False)
+        metadata.to_sql(f"{name}_metadata", con=self.engine, if_exists="replace", index=False)
 
     @dbsafe
     def retrieve_data(self, name: str, query: str = None, connection=None) -> pd.DataFrame:
@@ -105,6 +105,9 @@ class SQLStorage(DataStorage):
         select_statement = table.select().where(conditions)
 
         data = connection.execute(select_statement).fetchall()
+        
+        if data is None:
+            return None
 
         return pd.DataFrame(data)
     

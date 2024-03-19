@@ -34,12 +34,16 @@ class DataProcessor(ABC):
         self.storage: DataStorage = storage
         self.initialize()
 
-        self.cached_metadata = self.storage.retrieve_data(f"{self.name}_metadata")
-        if self.cached_metadata is not None:
-            metaschema(self.cached_metadata)
-
         self.data: Type[TypedDataFrame] = None
         self.cached_metadata: Type[TypedDataFrame] = None
+
+        self.cached_metadata = self.storage.retrieve_data(f"{self.name}_metadata")
+
+        if self.cached_metadata.empty:
+            self.cached_metadata = None
+
+        if self.cached_metadata is not None:
+            metaschema(self.cached_metadata)
 
         self.logger = logging.getLogger(__name__)
 
