@@ -25,7 +25,7 @@ def dbsafe(func):
                 func(self, *args, **kwargs, connection=connection)
             except Exception as e:
                 connection.rollback()
-                logging.error(f"Database query failed: {e}")
+                raise Exception(e)
 
     return wrapper
 
@@ -69,18 +69,20 @@ class SQLStorage(DataStorage):
         return cls._connections[url]
     
     @dbsafe
-    def create_table(self, name: str, tableschema: Type[TypedDataFrame], connection=None):
+    def create_table(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, connection=None):
         columns = ', '.join(f'{name} {self.type_mapping[dtype]}' for name, dtype in tableschema.schema.items())
-        query = text(f'CREATE TABLE {name} ({columns})')
+        primary_keys_string = ', PRIMARY KEY (' + ', '.join(primary_keys) + ')' if primary_keys else ''
+
+        query = text(f'CREATE TABLE {name} ({columns}' + primary_keys_string)
         connection.execute(query)
     
     @dbsafe
-    def initialize(self, name: str, schema: Type[TypedDataFrame], connection=None):
+    def initialize(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, connection=None):
         if not self.inspector.has_table(name):
 
             self.logger.info(f"Creating Table {name}...")
 
-            self.create_table(name, schema)
+            self.create_table(name, tableschema, primary_keys=primary_keys)
 
             self.logger.info(f"Created Table {name}")
 

@@ -30,6 +30,10 @@ class IntervalProcessor(DataProcessor):
             'domain': lambda x, y: str(SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y)),
             'collected_items': lambda x, y: x + y
         }
+
+    def initialize(self) -> None:
+        self.storage.initialize(self.name, self.schema, primary_keys=('id',))
+        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=('ticker', 'collector'))
     
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
         metadata = pd.concat([parameters, metadata], axis=1)
@@ -102,8 +106,11 @@ class IntervalProcessor(DataProcessor):
 
                 #updates, validates, and caches data and metadata
                 data = self.update_data(data_params, data)
+                print("ran 1")
+                print(data)
                 metadata = self.update_metadata(metadata_params, metadata) 
 
+                print("ran 2")
                 print(metadata)
 
                 self.storage.store_data(self.name, self.data, metadata)       
