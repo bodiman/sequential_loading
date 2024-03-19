@@ -7,5 +7,5 @@ class DataCollector(ABC):
         self.name = name
 
     @abstractmethod
-    def retrieve_data(self, **parameters) -> pd.DataFrame:
+    def retrieve_data(self, **parameters) -> pd.DataFrame | str:
         pass

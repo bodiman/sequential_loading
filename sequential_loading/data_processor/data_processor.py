@@ -35,9 +35,9 @@ class DataProcessor(ABC):
         self.storage.initialize(self.name, self.schema)
         self.storage.initialize(f"{self.name}_metadata", self.metaschema)
 
-        self.metadata = self.storage.retrieve_data(f"{self.name}_metadata")
-        if self.metadata:
-            self.metadata = metaschema(self.metadata)
+        self.cached_metadata = self.storage.retrieve_data(f"{self.name}_metadata")
+        if self.cached_metadata is not None:
+            metaschema(self.cached_metadata)
 
         self.data: Type[TypedDataFrame] = None
         self.cached_metadata: Type[TypedDataFrame] = None
@@ -45,8 +45,9 @@ class DataProcessor(ABC):
         self.logger = logging.getLogger(__name__)
 
     "Get cached metadata"
-    def format_query(self, **parameters) -> str:
-        parameter_query = ' and '.join([f'{key} == {value}' for key, value in parameters.items()])
+    def format_query(self, **parameters: dict) -> str:
+        #parameters are strings only
+        parameter_query = ' and '.join([f'{key} == "{value}"' for key, value in parameters.items()])
         return parameter_query
 
     "Updates metadata"

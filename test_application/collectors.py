@@ -24,15 +24,15 @@ class tiingoCollector(DataCollector):
         super().__init__(name)
         self.api_key = api_key
         self.resample_map = {
-            "day": "daily",
-            "month": "monthly",
-            "year": "annually"
+            "days": "daily",
+            "months": "monthly",
+            "years": "annually"
         }
         
 
     def retrieve_data(self, interval: Tuple[str, str], ticker, resample_freq=None):
         if resample_freq is None:
-            resample_freq = self.resample_map["day"]
+            resample_freq = self.resample_map["days"]
 
         headers = {
             'Content-Type': 'application/json',

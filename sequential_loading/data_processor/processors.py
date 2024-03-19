@@ -27,7 +27,7 @@ class IntervalProcessor(DataProcessor):
         self.unit = unit
 
         self.update_map = {
-            'domain': lambda x, y: SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y),
+            'domain': lambda x, y: str(SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y)),
             'collected_items': lambda x, y: x + y
         }
     
@@ -40,12 +40,12 @@ class IntervalProcessor(DataProcessor):
             self.cached_metadata = metadata
             return metadata
         
-        #query formatting is broken. Need to fix
-        parameter_query = self.format_query(**parameters)
-        cached_metadata = self.metadata.query(parameter_query) if self.metadata else None
-        
+        parameter_query = self.format_query(**parameters.iloc[0].to_dict())  
+        cached_metadata = self.cached_metadata.query(parameter_query) if self.cached_metadata is not None else None
+
         for key, value in self.update_map.items():
-            cached_metadata[key] = value(cached_metadata[key], metadata[key])
+            # print(cached_metadata.loc[0, key], metadata.loc[0, key])
+            cached_metadata[key] = value(cached_metadata.loc[0, key], metadata.loc[0, key])
         
         self.cached_metadata.loc[self.cached_metadata.eval(parameter_query)] = cached_metadata
 
@@ -63,7 +63,7 @@ class IntervalProcessor(DataProcessor):
 
         for collector in collectors:
             parameter_query = self.format_query(**parameters)
-            existing_domain = self.metadata.query(parameter_query)['domain'] if self.metadata else None
+            existing_domain = self.cached_metadata.query(parameter_query).iloc[0]['domain'] if self.cached_metadata is not None else None
 
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
@@ -73,7 +73,13 @@ class IntervalProcessor(DataProcessor):
                 # Collector must take interval argument to match schema
 
                 #need to add error handling here. If collector fails, it should not stop the entire process.
+                
                 data = collector.retrieve_data(interval=str_interval, resample_freq=self.unit, **parameters)
+                if isinstance(data, str):
+                    self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {data}")
+                    continue
+                # self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {e}")
+                # continue
 
                 # try:
                     #set parameters for data
@@ -97,6 +103,8 @@ class IntervalProcessor(DataProcessor):
                 #updates, validates, and caches data and metadata
                 data = self.update_data(data_params, data)
                 metadata = self.update_metadata(metadata_params, metadata) 
+
+                print(metadata)
 
                 self.storage.store_data(self.name, self.data, metadata)       
 
