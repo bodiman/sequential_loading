@@ -36,6 +36,8 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage", crea
 # Each DataProcessor will have its own Metaschema and a function defining how to update metadata during collection
 
 # These are the parameters that characterize a unique set of datapoints
+
+
 class EODParamSchema(TypedDataFrame):
     schema = {
         "ticker": str, 
@@ -57,4 +59,5 @@ class EODSchema(TypedDataFrame):
 tiingo_collector = tiingoCollector("TIINGO", api_key=api_key)
 
 processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
-processor.collect([tiingo_collector], ticker="AAPL", domain="/2019-01-01|2020-02-01")
+# processor.collect([tiingo_collector], ticker="AAPL", domain="/2019-01-01|2020-02-01")
+processor.delete(ticker="AAPL", domain="/2019-01-01|2020-01-01")

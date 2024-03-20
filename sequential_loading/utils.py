@@ -29,8 +29,6 @@ new_datestr: str
 """
 
 def increment(timeval, unit, decrement = False):
-    print(type(timeval))
-
     kwargs = {unit: (-1 if decrement else 1)}
     timeval = timeval + relativedelta(**kwargs)
 

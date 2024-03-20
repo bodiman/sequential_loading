@@ -50,7 +50,8 @@ class DataProcessor(ABC):
     "Get cached metadata"
     def format_query(self, **parameters: dict) -> str:
         #parameters are strings only
-        parameter_query = ' and '.join([f'{key} == "{value}"' for key, value in parameters.items()])
+        #replaced "and" with "&" to match pandas documentation (I think). Change back if this breaks something.
+        parameter_query = ' & '.join([f'{key} == "{value}"' for key, value in parameters.items()])
         return parameter_query
 
     @abstractmethod
@@ -67,7 +68,7 @@ class DataProcessor(ABC):
         pass
 
     @abstractmethod
-    def delete(self, collectors: List[DataCollector], **parameters) -> Type[TypedDataFrame]:
+    def delete(self, **parameters) -> Type[TypedDataFrame]:
         pass
 
 

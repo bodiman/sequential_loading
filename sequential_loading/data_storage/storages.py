@@ -90,9 +90,12 @@ class SQLStorage(DataStorage):
 
         
     @dbsafe  
-    def store_data(self, name:str, data: pd.DataFrame, metadata: pd.DataFrame, connection=None) -> None:
-        data.to_sql(name, con=self.engine, if_exists="append", index=False)
-        metadata.to_sql(f"{name}_metadata", con=self.engine, if_exists="replace", index=False)
+    def store_data(self, name:str, data: pd.DataFrame = None, metadata: pd.DataFrame = None, connection=None) -> None:
+        if data is not None:
+            data.to_sql(name, con=self.engine, if_exists="append", index=False)
+        
+        if metadata is not None:
+            metadata.to_sql(f"{name}_metadata", con=self.engine, if_exists="replace", index=False)
 
     @dbsafe
     def retrieve_data(self, name: str, query: str = None, connection=None) -> pd.DataFrame:
@@ -100,12 +103,13 @@ class SQLStorage(DataStorage):
         
         conditions = " AND ".join(query.split("&")) if query else "TRUE"
         conditions = conditions.replace("===", "=").replace("==", "=")
-        conditions = text(query) if query else text("TRUE")
+        conditions = conditions.replace('"', "'")
+        conditions = text(conditions)
 
         select_statement = table.select().where(conditions)
 
         data = connection.execute(select_statement).fetchall()
-        
+
         if data is None:
             return None
 
