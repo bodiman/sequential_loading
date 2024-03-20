@@ -32,7 +32,6 @@ class IntervalProcessor(DataProcessor):
         }
 
     def initialize(self) -> None:
-        #this is hardcoded, change to parameter
         self.storage.initialize(self.name, self.schema)
         self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=(key for key in self.metaschema.schema.keys()))
     
