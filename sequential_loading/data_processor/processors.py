@@ -32,8 +32,9 @@ class IntervalProcessor(DataProcessor):
         }
 
     def initialize(self) -> None:
-        self.storage.initialize(self.name, self.schema, primary_keys=('id',))
-        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=('ticker', 'collector'))
+        #this is hardcoded, change to parameter
+        self.storage.initialize(self.name, self.schema)
+        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=(key for key in self.metaschema.schema.keys()))
     
     #this function is actually not unique to IntervalProcessor, but could be used by all DataProcessors
     def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame]) -> None:
