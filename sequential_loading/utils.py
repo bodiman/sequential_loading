@@ -29,6 +29,8 @@ new_datestr: str
 """
 
 def increment(timeval, unit, decrement = False):
+    print(type(timeval))
+
     kwargs = {unit: (-1 if decrement else 1)}
     timeval = timeval + relativedelta(**kwargs)
 
@@ -56,7 +58,7 @@ Returns
 intersects: bool
     Weather the intervals intersect
 """
-def intervals_intersect(interval1, interval2, unit, datestrformat):
+def intervals_intersect(interval1, interval2, unit):
     s1, e1 = interval1
     s2, e2 = interval2
 

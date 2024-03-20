@@ -19,7 +19,10 @@ class SparsityMappingString():
             date_to_str = lambda date: date.strftime(datetime_format)
 
         if str_to_date is None:
-            str_to_date = lambda string: datetime.strptime(string, datetime_format)
+            def str_to_date(string):
+                # print(string, datetime_format)
+                return datetime.strptime(string, datetime_format)
+            # str_to_date = lambda string: datetime.strptime(string, datetime_format)
 
         self.datetime_format = datetime_format
         self.date_to_str = date_to_str
@@ -87,8 +90,8 @@ class SparsityMappingString():
                 running_date = stop_date
 
 
-        except Exception:
-            raise ValueError(f"Improperly formatted sparsity mapping string {mapstring}")
+        except Exception as e:
+            raise ValueError(f"Improperly formatted sparsity mapping string {mapstring}. {e}")
 
         return True
 
@@ -139,7 +142,7 @@ class SparsityMappingString():
 
         new_sparsity_mapping_array = []
         for interval in sparsity_mapping_array:
-            if intervals_intersect(interval, [start, stop], unit=self.unit, datestrformat=self.datetime_format):
+            if intervals_intersect(interval, [start, stop], unit=self.unit):
                 start = min(start, interval[0])
                 stop = max(stop, interval[1])
 
@@ -296,7 +299,7 @@ class SparsityMappingString():
 
     """
     def subtract_continuous_intervals(self, interval1: str, interval2: str):
-        if not intervals_intersect(interval1, interval2, unit=self.unit, datestrformat=self.datetime_format):
+        if not intervals_intersect(interval1, interval2, unit=self.unit):
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
 
@@ -309,17 +312,23 @@ class SparsityMappingString():
         if interval1[0] < interval2[0] and interval2[1] < interval1[1]:
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
-            return f"{interval1[0]}|{increment(interval2[0], self.unit, decrement=True)}/{increment(interval2[1], self.unit)}|{interval1[1]}"
+            interval2[0] = self.date_to_str(increment(interval2[0], self.unit, decrement=True))
+            interval2[1] - self.date_to_str(increment(interval2[1], self.unit))
+
+            return f"{interval1[0]}|{interval2[0]}/{interval2[1]}|{interval1[1]}"
         
         #one starts in front of the other
         if interval1[0] >= interval2[0]:
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
-            return f"{increment(interval2[1], self.unit, decrement=True)}|{interval1[1]}"
+            interval2[1] = self.date_to_str(increment(interval2[1], self.unit, decrement=True))
+
+            return f"{interval2[1]}|{interval1[1]}"
         
         interval1[0] = self.date_to_str(interval1[0])
         interval1[1] = self.date_to_str(interval1[1])
-        return f"{interval1[0]}|{increment(interval2[0], self.unit)}"
+        interval2[0] = self.date_to_str(increment(interval2[0], self.unit))
+        return f"{interval1[0]}|{interval2[0]}"
 
         """
         Here are the cases:
