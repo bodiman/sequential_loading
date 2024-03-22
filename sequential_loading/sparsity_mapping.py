@@ -321,7 +321,7 @@ class SparsityMappingString():
         if interval1[0] >= interval2[0]:
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
-            interval2[1] = self.date_to_str(increment(interval2[1], self.unit, decrement=True))
+            interval2[1] = self.date_to_str(increment(interval2[1], self.unit))
 
             return f"{interval2[1]}|{interval1[1]}"
         

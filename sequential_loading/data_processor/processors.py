@@ -69,7 +69,7 @@ class IntervalProcessor(DataProcessor):
         for collector in collectors:
             
             #get existing metadata
-            parameter_query = self.format_query(collector=collector, **parameters)
+            parameter_query = self.format_query(collector=collector.name, **parameters)
             existing_domain = self.cached_metadata.query(parameter_query).iloc[0]['domain'] if self.cached_metadata is not None else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
@@ -106,7 +106,7 @@ class IntervalProcessor(DataProcessor):
                 metadata = self.update_metadata(metadata_params, metadata) 
                 
                 #store data
-                self.storage.store_data(self.name, data, self.metadata)
+                self.storage.store_data(self.name, data, self.cached_metadata)
                 
 
     def delete(self, collectors: List[DataCollector], domain: str, **parameters: Type[TypedDataFrame]) -> None:
