@@ -60,4 +60,4 @@ tiingo_collector = tiingoCollector("TIINGO", api_key=api_key)
 
 processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
 # processor.collect([tiingo_collector], ticker="AAPL", domain="/2019-01-01|2020-02-01")
-processor.delete(ticker="AAPL", domain="/2019-01-01|2020-01-01")
+processor.delete([tiingo_collector], ticker="AAPL", domain="/2019-01-01|2020-01-01")

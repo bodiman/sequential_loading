@@ -46,7 +46,7 @@ class DataStorage(ABC):
         pass
 
     @abstractmethod
-    def delete_rows(self, name: str, ids: List[str], **kwargs) -> None:
+    def delete_data(self, name: str, query: str, **kwargs) -> None:
         pass
 
     @abstractmethod

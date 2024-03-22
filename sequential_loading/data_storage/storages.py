@@ -68,6 +68,14 @@ class SQLStorage(DataStorage):
 
         return cls._connections[url]
     
+    def process_query(self, query: str, default_val: str = "TRUE") -> str:
+        conditions = " AND ".join(query.split("&")) if query else default_val
+        conditions = conditions.replace("===", "=").replace("==", "=")
+        conditions = conditions.replace('"', "'")
+        conditions = text(conditions)
+
+        return conditions
+    
     @dbsafe
     def create_table(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, connection=None):
         columns = ', '.join(f'{name} {self.type_mapping[dtype]}' for name, dtype in tableschema.schema.items())
@@ -101,10 +109,7 @@ class SQLStorage(DataStorage):
     def retrieve_data(self, name: str, query: str = None, connection=None) -> pd.DataFrame:
         table = self.metadata.tables.get(name)
         
-        conditions = " AND ".join(query.split("&")) if query else "TRUE"
-        conditions = conditions.replace("===", "=").replace("==", "=")
-        conditions = conditions.replace('"', "'")
-        conditions = text(conditions)
+        conditions = self.process_query(query)
 
         select_statement = table.select().where(conditions)
 
@@ -116,11 +121,16 @@ class SQLStorage(DataStorage):
         return pd.DataFrame(data)
     
     @dbsafe
-    def delete_rows(self, name: str, uuids: List[str], connection=None) -> None:
+    def delete_data(self, name: str, query: str = None, connection=None) -> None:
         table = self.metadata.tables.get(name)
-        delete_statement = delete(table).where(table.c.uuid.in_(uuids))
+        
+        conditions = self.process_query(query, "FALSE")
 
-        connection.execute(delete_statement)
+        delete_statement = delete(table).where(conditions)
+
+        result = connection.execute(delete_statement)
+
+        return result.rowcount
 
     @dbsafe
     def delete_processor(self, name: str, connection=None) -> None:
