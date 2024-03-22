@@ -62,6 +62,19 @@ class IntervalProcessor(DataProcessor):
         self.data = data
 
         return self.data
+    
+    #also not specific, will move all these eventually
+    def retrieve_metadata(self, **parameters: dict) -> pd.DataFrame:
+        if self.cached_metadata is None:
+            return None
+        
+        parameter_query = ' & '.join([f'{key} == "{value}"' for key, value in parameters.items()])
+        results = self.cached_metadata.query(parameter_query)
+        
+        if results.empty:
+            return None
+        
+        return results.iloc[0]
 
     def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
         domain_sms = SparsityMappingString(unit=self.unit, string=domain)
@@ -69,19 +82,21 @@ class IntervalProcessor(DataProcessor):
         for collector in collectors:
             
             #get existing metadata
-            parameter_query = self.format_query(collector=collector.name, **parameters)
-            existing_domain = self.cached_metadata.query(parameter_query).iloc[0]['domain'] if self.cached_metadata is not None else None
+            existing_metadata = self.retrieve_metadata(collector=collector.name, **parameters)
+            existing_domain = existing_metadata['domain'] if existing_metadata is not None else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
             #find domain to retrieve
             query_domain = domain_sms - existing_domain
 
             for interval, str_interval in zip(query_domain.get_intervals(), query_domain.get_str_intervals()):
-                
                 #retrieve data from collector
                 data = collector.retrieve_data(interval=str_interval, resample_freq=self.unit, **parameters)
                 if isinstance(data, str):
                     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {data}")
+                    continue
+
+                if data.empty:
                     continue
                 
                 #set metadata
@@ -112,8 +127,8 @@ class IntervalProcessor(DataProcessor):
     def delete(self, collectors: List[DataCollector], domain: str, **parameters: Type[TypedDataFrame]) -> None:
         for collector in collectors:
             #query data with particular parameters
-            parameter_query = self.format_query(**parameters)
-            existing_domain = self.cached_metadata.query(parameter_query).iloc[0]['domain'] if self.cached_metadata is not None else None
+            existing_metadata = self.retrieve_metadata(collector=collector.name, **parameters)
+            existing_domain = existing_metadata['domain'] if existing_metadata is not None else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
             #subtract existing domain from specified domain to get derrived domain, subtract specified domain from existing domain to get new domain
             query_domain = SparsityMappingString(unit=self.unit, string=domain)
