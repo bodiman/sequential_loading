@@ -3,7 +3,7 @@ from sequential_loading.data_storage.data_storage import DataStorage
 from sequential_loading.data_collector import DataCollector
 
 from sequential_loading.sparsity_mapping import SparsityMappingString
-from typing import List, Type
+from typing import List, Type, Tuple
 
 import uuid
 import datetime
@@ -36,7 +36,11 @@ class IntervalProcessor(DataProcessor):
         self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=(key for key in self.metaschema.schema.keys()))
     
     #this function is actually not unique to IntervalProcessor, but could be used by all DataProcessors
-    def update_metadata(self, parameters: Type[TypedDataFrame], metadata: Type[TypedDataFrame], deletion: bool = False) -> None:
+    #The reason we pass in data as a dataframe is to preserve typing
+    def update_metadata(self, parameters: pd.DataFrame, metadata: pd.DataFrame, deletion: bool = False) -> None:
+        assert len(parameters) == 1, "Parameters must be a single row dataframe."
+        assert len(metadata) == 1, "Metadata must be a single row dataframe."
+
         metadata = pd.concat([parameters, metadata], axis=1)
         self.metaschema(metadata)
 
@@ -45,18 +49,24 @@ class IntervalProcessor(DataProcessor):
             self.cached_metadata = metadata
             return metadata
         
-        parameter_query = self.format_query(**parameters.iloc[0].to_dict())  
-        cached_metadata = self.cached_metadata.query(parameter_query) if self.cached_metadata is not None else None
+        parameters = parameters.iloc[0].to_dict()
+
+        cached_metadata, metadata_index = self.retrieve_metadata(**parameters)
+
+        if cached_metadata is None:
+            self.cached_metadata = pd.concat([self.cached_metadata, metadata], ignore_index=True)
+            return metadata
 
         for key, value in self.update_map.items():
-            cached_metadata[key] = value(cached_metadata.loc[0, key], metadata.loc[0, key], deletion)
+            cached_metadata[key] = value(cached_metadata[key], metadata.loc[0, key], deletion)
         
-        self.cached_metadata.loc[self.cached_metadata.eval(parameter_query)] = cached_metadata
+        #Get index of existing metadata
+        self.cached_metadata.loc[metadata_index] = cached_metadata
 
         return cached_metadata
 
     #This is also not specific to IntervalProcessor, but could be used by all DataProcessors
-    def update_data(self, parameters: Type[TypedDataFrame], data: Type[TypedDataFrame]) -> Type:  
+    def update_data(self, parameters: pd.DataFrame, data: Type[TypedDataFrame]) -> pd.DataFrame:  
         data = pd.concat([parameters, data], axis=1)
         self.schema(data)
         self.data = data
@@ -64,25 +74,25 @@ class IntervalProcessor(DataProcessor):
         return self.data
     
     #also not specific, will move all these eventually
-    def retrieve_metadata(self, **parameters: dict) -> pd.DataFrame:
+    def retrieve_metadata(self, **parameters: dict) -> dict:
         if self.cached_metadata is None:
-            return None
-        
+            return (None, None)
+
         parameter_query = ' & '.join([f'{key} == "{value}"' for key, value in parameters.items()])
         results = self.cached_metadata.query(parameter_query)
         
         if results.empty:
-            return None
+            return (None, None)
         
-        return results.iloc[0]
+        return results.iloc[0], results.index[0]
 
-    def collect(self, collectors: List[DataCollector], domain:str = None, **parameters) -> pd.DataFrame:
+    def collect(self, collectors: List[DataCollector], domain:str = None, **parameters: dict) -> pd.DataFrame:
         domain_sms = SparsityMappingString(unit=self.unit, string=domain)
 
         for collector in collectors:
             
             #get existing metadata
-            existing_metadata = self.retrieve_metadata(collector=collector.name, **parameters)
+            existing_metadata, _ = self.retrieve_metadata(collector=collector.name, **parameters)
             existing_domain = existing_metadata['domain'] if existing_metadata is not None else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
 
@@ -127,7 +137,7 @@ class IntervalProcessor(DataProcessor):
     def delete(self, collectors: List[DataCollector], domain: str, **parameters: Type[TypedDataFrame]) -> None:
         for collector in collectors:
             #query data with particular parameters
-            existing_metadata = self.retrieve_metadata(collector=collector.name, **parameters)
+            existing_metadata, _ = self.retrieve_metadata(collector=collector.name, **parameters)
             existing_domain = existing_metadata['domain'] if existing_metadata is not None else None
             existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
             #subtract existing domain from specified domain to get derrived domain, subtract specified domain from existing domain to get new domain
