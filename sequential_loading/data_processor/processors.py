@@ -50,7 +50,7 @@ class IntervalProcessor(DataProcessor):
 
             for interval, str_interval in zip(query_domain.get_intervals(), query_domain.get_str_intervals()):
                 #retrieve data from collector
-                data = collector.retrieve_data(interval=str_interval, resample_freq=self.unit, **parameters)
+                data = collector.retrieve_data(interval=interval, resample_freq=self.unit, **parameters)
                 if isinstance(data, str):
                     self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {data}")
                     continue

@@ -134,7 +134,16 @@ class SQLStorage(DataStorage):
 
     @dbsafe
     def delete_processor(self, name: str, connection=None) -> None:
-        delete_statement = delete(self.processors[name])
-        connection.execute(delete_statement)
+        query = text(f"DROP TABLE IF EXISTS {name}")
+        connection.execute(query)
 
-        self.processors.pop(name)
+        query = text(f"DROP TABLE IF EXISTS {name}_metadata")
+        connection.execute(query)
+
+        print("this ran")
+
+        connection.commit()
+        connection.close()
+
+        if name in self.processors:
+            self.processors.pop(name)

@@ -10,13 +10,9 @@ import uuid
 
 from typing import Tuple
 
+import datetime
+
 #EOD Collectors
-
-# class tiingoCollector(DataCollector):
-
-#     def retrieve_data(self, domain, ticker=None):
-#         result = httpx.get(f"https://tiingo_url/{ticker}/{domain}")
-#         return result
     
 class tiingoCollector(DataCollector):
 
@@ -31,6 +27,8 @@ class tiingoCollector(DataCollector):
         
 
     def retrieve_data(self, interval: Tuple[str, str], ticker, resample_freq=None):
+        interval = (interval[0].strftime("%Y-%m-%d"), interval[1].strftime("%Y-%m-%d"))
+
         if resample_freq is None:
             resample_freq = self.resample_map["days"]
 
@@ -58,8 +56,16 @@ class tiingoCollector(DataCollector):
 
 # Weather Collectors
     
-class openWeatherCollector(DataCollector):
+class weatherCollector(DataCollector):
+    def __init__(self, name, api_key):
+        super().__init__(name)
 
-    def retrieve_data(self, domain, location=None):
-        result = httpx.get(f"openweather_url/{location}/{domain}")
-        return result
+        self.api_key = api_key
+
+    def retrieve_data(self, interval: Tuple[str, str], location: str):
+        startdate = interval[0].strftime("%Y-%m-%d")
+        enddate = interval[1].strftime("%Y-%m-%d")
+        
+        
+        
+        # return result

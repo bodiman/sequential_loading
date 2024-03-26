@@ -33,8 +33,14 @@ delete_processor: (processor: DataProcessor) -> None:
 
 """
 class DataStorage(ABC):
+
+    #initialize a data processor
     @abstractmethod
     def initialize(self, name: str, data: Type[TypedDataFrame], **kwargs) -> None:
+        pass
+
+    @abstractmethod
+    def delete_processor(self, name: str, **kwargs) -> None:
         pass
     
     @abstractmethod
@@ -42,17 +48,12 @@ class DataStorage(ABC):
         pass
 
     @abstractmethod
-    def retrieve_data(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
-        pass
-
-    @abstractmethod
     def delete_data(self, name: str, query: str, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def delete_processor(self, name: str, **kwargs) -> None:
+    def retrieve_data(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
         pass
-
 
     
     # @abstractmethod

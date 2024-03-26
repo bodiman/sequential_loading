@@ -1,8 +1,7 @@
 from sequential_loading.data_storage import SQLStorage
-from sequential_loading.data_collector import DataCollector
 from sequential_loading.data_processor import IntervalProcessor
 
-from test_application.collectors import tiingoCollector
+from test_application.collectors import tiingoCollector, weatherCollector
 
 import datetime
 
@@ -19,10 +18,11 @@ import os
 load_dotenv()
 
 # Access the API_KEY environment variable
-api_key = os.getenv('TIINGO_API_KEY')
+tiingo_api_key = os.getenv('TIINGO_API_KEY')
+weather_api_key = os.getenv('CLIMATE_API_KEY')
 
 #plz don't hack me
-my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage", createdb=True)
+my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 
 # Each datapoint has a corresponding set of parameters that are not necessarily unique.
 # Each set of parameters has a corresponding set of metadata that is unique.
@@ -58,9 +58,27 @@ class EODSchema(TypedDataFrame):
 
     # unique_constraint = ["id", "date"]
 
+class WeatherParamSchema(TypedDataFrame):
+    schema = {
+        "location": str,
+        "collector": str
+    }
 
-tiingo_collector = tiingoCollector("TIINGO", api_key=api_key)
+class WeatherSchema(TypedDataFrame):
+    schema = {
+        "id": str,
+        "date": DATE_TIME_DTYPE,
+        "temperature": np.float64,
+        "humidity": np.float64,
+    }
 
-processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
-processor.collect([tiingo_collector], ticker="IWF", domain="/2020-01-01|2021-02-01")
-# processor.delete([tiingo_collector], ticker="SPY", domain="/2020-01-01|2021-02-01")
+    # unique_constraint = ["id", "date"]
+
+tiingo_collector = tiingoCollector("TIINGO", api_key=tiingo_api_key)
+
+stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
+stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
+stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
+
+# stock_processor = IntervalProcessor("stock_processor2", EODParamSchema, EODSchema, my_storage, unit="days")
+my_storage.delete_processor("stock_processor2")
