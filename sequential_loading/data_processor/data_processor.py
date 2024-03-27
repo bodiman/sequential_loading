@@ -26,7 +26,7 @@ class DataProcessor(ABC):
         self.metaschema = metaschema
 
         self.paramschema = paramschema
-        self.schema = type('ProcessorSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **schema.schema}})
+        self.schema = type('ProcessorSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **schema.schema}, "unique_constraint": schema.unique_constraint if hasattr(schema, "unique_constraint") else None})
         self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
         
         self.collectors = collectors

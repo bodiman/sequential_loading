@@ -54,8 +54,9 @@ class SQLStorage(DataStorage):
             create_database(url)
 
         self.inspector = Inspector.from_engine(self.engine)
-
         self.metadata.reflect(bind=self.engine)
+
+        self.tables = self.inspector.get_table_names()
 
         self.processors = {}
 
@@ -139,8 +140,6 @@ class SQLStorage(DataStorage):
 
         query = text(f"DROP TABLE IF EXISTS {name}_metadata")
         connection.execute(query)
-
-        print("this ran")
 
         connection.commit()
         connection.close()
