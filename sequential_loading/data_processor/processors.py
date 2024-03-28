@@ -21,8 +21,8 @@ class IntervalProcessor(DataProcessor):
 
     metaschema = IntervalMetaSchema
 
-    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, unit: str, collectors: List[DataCollector] = None) -> None:
-        super().__init__(name, paramschema, schema, self.metaschema, storage, collectors)
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, unit: str, createtable=False) -> None:
+        super().__init__(name, paramschema, schema, self.metaschema, storage, createtable=createtable)
 
         self.unit = unit
 
@@ -30,12 +30,6 @@ class IntervalProcessor(DataProcessor):
             'domain': lambda x, y, deletion = False: str(SparsityMappingString(unit=self.unit, string=x) - SparsityMappingString(unit=self.unit, string=y)) if deletion else str(SparsityMappingString(unit=self.unit, string=x) + SparsityMappingString(unit=self.unit, string=y)),
             'collected_items': lambda x, y, deletion: x - y if deletion else x + y
         }
-
-    def initialize(self) -> None:
-        primary_keys = [key for key in [*list(self.paramschema.schema.keys()), *self.schema.unique_constraint]]
-
-        self.storage.initialize(self.name, self.schema, primary_keys=self.schema.unique_constraint)
-        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=list(self.paramschema.schema.keys()))
 
     def collect(self, collectors: List[DataCollector], domain:str = None, **parameters: dict) -> pd.DataFrame:
         domain_sms = SparsityMappingString(unit=self.unit, string=domain)

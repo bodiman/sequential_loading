@@ -56,13 +56,12 @@ class EODSchema(TypedDataFrame):
         "volume": np.float64
     }
 
-    unique_constraint = ["date"]
+    unique_constraint = ["id"]
 
 tiingo_collector = tiingoCollector("TIINGO", api_key=tiingo_api_key)
 
-my_storage.delete_processor("stock_processor")
+# my_storage.delete_processor("stock_processor")
 stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
-# stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
+stock_processor.collect([tiingo_collector], ticker="SPY", domain="/2020-01-01|2022-02-01")
+stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
 # stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
-
-# stock_processor = IntervalProcessor("stock_processor2", EODParamSchema, EODSchema, my_storage, unit="days")

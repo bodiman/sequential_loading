@@ -11,7 +11,7 @@ import torch
 Dataloader is an interface for retrieving data from a storage object and packaging it into a pytorch dataset.
 Needs to be able to 
 """
-class DataLoader(ABC, Dataset):
+class StorageDataset(ABC, Dataset):
     def __init__(self, storage: DataStorage, **parameters):
         self.storage = storage
         self.dataframe = self.load(**parameters)

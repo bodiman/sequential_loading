@@ -50,8 +50,11 @@ class SQLStorage(DataStorage):
         self.name = self.database_url.database
         self.metadata = MetaData()
 
-        if createdb and not database_exists(url):
-            create_database(url)
+        if not database_exists(url):
+            if createdb:
+                create_database(url)
+            else:
+                raise Exception(f"A database named {self.name} does not exist. To create one, set createdb=True.")
 
         self.inspector = Inspector.from_engine(self.engine)
         self.metadata.reflect(bind=self.engine)
@@ -86,14 +89,16 @@ class SQLStorage(DataStorage):
         connection.execute(query)
     
     @dbsafe
-    def initialize(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, connection=None):
+    def initialize(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, createtable: bool=False, connection=None):
         if not self.inspector.has_table(name):
+            if createtable:
+                self.logger.info(f"Creating Table {name}...")
 
-            self.logger.info(f"Creating Table {name}...")
+                self.create_table(name, tableschema, primary_keys=primary_keys)
 
-            self.create_table(name, tableschema, primary_keys=primary_keys)
-
-            self.logger.info(f"Created Table {name}")
+                self.logger.info(f"Created Table {name}")
+            else:
+                raise Exception(f"Table {name} does not exist. To create one, set createtable=True.")
 
         self.processors[name] = Table(name, self.metadata, autoload_with=self.engine)
 
