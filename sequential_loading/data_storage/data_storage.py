@@ -34,6 +34,24 @@ delete_processor: (processor: DataProcessor) -> None:
 """
 class DataStorage(ABC):
 
+    def retrieve_data(self, *processor_names: List[str], join_column: str = None, query: str = None, join_columns: List[str] = None, queries: List[str] = None, **kwargs) -> pd.DataFrame:
+        assert not query or not queries, "Only query or queries can be specified"
+        assert not join_column or not join_columns, "Only join_column or join_columns can be specified"
+
+        if query:
+            queries = [query] * len(processor_names)
+
+        if join_column:
+            join_columns = [join_column] * (len(processor_names) - 1)
+        
+        full_table = self.retrieve_processor(processor_names[0], query=queries[0], **kwargs)
+
+        for p_name, p_query, p_column in zip(processor_names[1:], queries[1:], join_columns):
+            data = self.retrieve_processor(p_name, query=p_query, **kwargs)
+            full_table = full_table.merge(data, on=p_column, how='left')
+
+        return full_table
+
     #initialize a data processor
     @abstractmethod
     def initialize(self, name: str, data: Type[TypedDataFrame], **kwargs) -> None:
@@ -52,8 +70,9 @@ class DataStorage(ABC):
         pass
 
     @abstractmethod
-    def retrieve_data(self, name: str, conditions: object = None, **kwargs) -> pd.DataFrame:
+    def retrieve_processor(self, name: str, query: str = None, **kwargs) -> pd.DataFrame:
         pass
+
 
     
     # @abstractmethod

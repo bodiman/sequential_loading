@@ -1,1 +1,3 @@
 from sequential_loading.storage_dataset.storage_dataset import StorageDataset
+
+from sequential_loading.storage_dataset.storage_datasets import CachedDataset

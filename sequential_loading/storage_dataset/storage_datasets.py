@@ -1,6 +1,7 @@
 from sequential_loading.storage_dataset import StorageDataset
 
-class SimpleCachedDataset(StorageDataset):
+class CachedDataset(StorageDataset):
+    #need to get these parameters figured out
     def __init__(self, storage, **parameters):
         super().__init__(storage, **parameters)
 

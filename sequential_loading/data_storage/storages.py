@@ -112,7 +112,7 @@ class SQLStorage(DataStorage):
             metadata.to_sql(f"{name}_metadata", con=self.engine, if_exists="replace", index=False)
 
     @dbsafe
-    def retrieve_data(self, name: str, query: str = None, connection=None) -> pd.DataFrame:
+    def retrieve_processor(self, name: str, query: str = None, connection=None) -> pd.DataFrame:
         table = self.metadata.tables.get(name)
         
         conditions = self.process_query(query)

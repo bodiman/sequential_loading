@@ -35,7 +35,7 @@ class DataProcessor(ABC):
         self.data: Type[TypedDataFrame] = None
         self.cached_metadata: Type[TypedDataFrame] = None
 
-        self.cached_metadata = self.storage.retrieve_data(f"{self.name}_metadata")
+        self.cached_metadata = self.storage.retrieve_processor(f"{self.name}_metadata")
 
         if self.cached_metadata.empty:
             self.cached_metadata = None

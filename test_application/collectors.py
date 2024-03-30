@@ -54,18 +54,18 @@ class tiingoCollector(DataCollector):
         return df
     
 
-# Weather Collectors
+# # Weather Collectors
     
-class weatherCollector(DataCollector):
-    def __init__(self, name, api_key):
-        super().__init__(name)
+# class weatherCollector(DataCollector):
+#     def __init__(self, name, api_key):
+#         super().__init__(name)
 
-        self.api_key = api_key
+#         self.api_key = api_key
 
-    def retrieve_data(self, interval: Tuple[str, str], location: str):
-        startdate = interval[0].strftime("%Y-%m-%d")
-        enddate = interval[1].strftime("%Y-%m-%d")
+#     def retrieve_data(self, interval: Tuple[str, str], location: str):
+#         startdate = interval[0].strftime("%Y-%m-%d")
+#         enddate = interval[1].strftime("%Y-%m-%d")
         
         
         
-        # return result
+#         # return result

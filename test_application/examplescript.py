@@ -1,7 +1,9 @@
 from sequential_loading.data_storage import SQLStorage
 from sequential_loading.data_processor import IntervalProcessor
 
-from test_application.collectors import tiingoCollector, weatherCollector
+from sequential_loading.storage_dataset import CachedDataset
+
+from test_application.collectors import tiingoCollector
 
 import datetime
 
@@ -61,7 +63,9 @@ class EODSchema(TypedDataFrame):
 tiingo_collector = tiingoCollector("TIINGO", api_key=tiingo_api_key)
 
 # my_storage.delete_processor("stock_processor")
-stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
-stock_processor.collect([tiingo_collector], ticker="SPY", domain="/2020-01-01|2022-02-01")
-stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
+# stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
+# stock_processor.collect([tiingo_collector], ticker="SPY", domain="/2020-01-01|2022-02-01")
+# stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
 # stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
+
+dataset = CachedDataset(my_storage)
