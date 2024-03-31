@@ -2,6 +2,8 @@ from sequential_loading.storage_dataset import StorageDataset
 from sequential_loading.data_storage import DataStorage
 from typing import List
 
+import pandas as pd
+
 class CachedDataset(StorageDataset):
     #need to get these parameters figured out
     def __init__(self, \
@@ -14,5 +16,5 @@ class CachedDataset(StorageDataset):
                  **parameters):
         super().__init__(storage, processor_names, join_column=join_column, query=query, join_columns=join_columns, queries=queries, **parameters)
 
-    def load(self, **parameters):
+    def load(self, **parameters) -> pd.DataFrame:
         return self.storage.retrieve_data(self.processor_names, join_columns=self.join_columns, queries=self.queries, **parameters)

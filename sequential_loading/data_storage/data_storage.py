@@ -56,7 +56,7 @@ class DataStorage(ABC):
 
         for p_name, p_query, p_column in zip(processor_names[1:], queries[1:], join_columns):
             data = self.retrieve_processor(p_name, query=p_query, **kwargs)
-            full_table = full_table.merge(data, on=p_column, how='left')
+            full_table = full_table.merge(data, on=p_column, how='inner')
 
         return full_table
 

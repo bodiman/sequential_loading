@@ -20,6 +20,7 @@ class StorageDataset(ABC, Dataset):
                  join_columns: List[str] | List[List[str]] = None, \
                  query: str | List[str] = None, \
                  queries: List[str] | List[List[str]] = None, \
+                 selected_columns: List[str] = None, \
                  **parameters):
         
         assert not query or not queries, "Only query or queries can be specified"
@@ -39,12 +40,15 @@ class StorageDataset(ABC, Dataset):
         self.storage = storage
         self.dataframe = self.load(**parameters)
 
+        if selected_columns is not None:
+            self.dataframe = self.dataframe.filter(regex=f"({'|'.join(selected_columns)})")
+
     def __len__(self):
         return len(self.dataframe)
 
     def __getitem__(self, index):
-        x = torch.tensor(self.dataframe.iloc[index].values)
-        return x
+        x = self.dataframe.iloc[index].values
+        return torch.tensor(x)
 
     @abstractmethod
     def load(self, **parameters) -> pd.DataFrame:

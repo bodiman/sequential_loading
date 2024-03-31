@@ -68,4 +68,10 @@ tiingo_collector = tiingoCollector("TIINGO", api_key=tiingo_api_key)
 # stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
 # stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
 
-dataset = CachedDataset(my_storage, ["stock_processor"])
+processor_list = ["stock_processor", "stock_processor"]
+queries = ["ticker == 'QQQ'", "ticker == 'SPY'"]
+selected_columns = ["open", "high", "low", "close", "volume"]
+
+dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
+
+print(dataset[0])
