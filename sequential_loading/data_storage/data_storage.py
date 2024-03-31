@@ -34,15 +34,23 @@ delete_processor: (processor: DataProcessor) -> None:
 """
 class DataStorage(ABC):
 
-    def retrieve_data(self, *processor_names: List[str], join_column: str = None, query: str = None, join_columns: List[str] = None, queries: List[str] = None, **kwargs) -> pd.DataFrame:
+    def retrieve_data(self, processor_names: List[str], join_column: str = None, query: str = None, join_columns: List[str] = None, queries: List[str] = None, **kwargs) -> pd.DataFrame:
         assert not query or not queries, "Only query or queries can be specified"
         assert not join_column or not join_columns, "Only join_column or join_columns can be specified"
+
+        assert join_column is not None or join_columns is not None or len(processor_names) <= 1, "At least one join column must be specified for multiple processors"
 
         if query:
             queries = [query] * len(processor_names)
 
         if join_column:
             join_columns = [join_column] * (len(processor_names) - 1)
+
+        if not query and not queries:
+            queries = [None] * len(processor_names)
+
+        if not join_column and not join_columns:
+            join_columns = [None] * (len(processor_names) - 1)
         
         full_table = self.retrieve_processor(processor_names[0], query=queries[0], **kwargs)
 
