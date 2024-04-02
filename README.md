@@ -3,8 +3,8 @@
 # Motivation
 When collecting sparsely-available data, it is often necessary to load data from multiple sources. Effectively patching together datasets requires an organized representation of 
 
-1. what data is available from each source
-2. the source of each collected datapoint
+1. What data is available from each source
+2. The source of each collected datapoint
 
 This library provides a framework for loading data from different sources under a common interface and a unified metadata representation. It provides a way to collect and store information about queries made to different data sources, and to store the data itself.
 
