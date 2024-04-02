@@ -16,7 +16,7 @@ This library provides a framework for loading data from different sources under 
 
 The objects in this library are organized around the following concepts: data, parameters, and metadata. These terms have specific meanings in the context of this library, which are discussed below.
 
-# # Data
+## Data
 
 Data refers to the actual information that is collected from a data source. Each datapoint is represented as a row in a typed pandas dataframe, whose schema is refered to as a `DataSchema`.
 
