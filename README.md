@@ -28,13 +28,17 @@ Parameters are inputs to a data collection query. They are represented as a row 
 
 Metadata is information that is tracked about queries executed through a particular data processor. It is stored in a typed pandas dataframe, whose schema is refered to as a `MetaSchema`. The metaschema is defined uniquely for each processor. The metadata is tracked and updated for each query executed through a processor. 
 
-# Data Collectors
 
-# Data Processors
+# Components
+The Sequential Loading Library consists of 4 interfaces: Data Collectors, Data Processors, Data Storages, and Storage Datasets. Data Collectors are provide an interface for retriving data from a single source. Data Processors are responsible for tracking metadata about queries made to Data Processors. Data Storage is responsible for storing and retrieving metadata. Storage Datasets are responsible for synthesizing a dataset from data collected in the processors of a Data Storage.
 
-# Data Storages
+## Data Collectors
 
-# Storage Dataset
+## Data Processors
+
+## Data Storages
+
+## Storage Dataset
 
 A storage Dataset is the interface for synthesizing a dataset from data collected in the processors of a Data Storage. Currently, only the Cached Storage is implemented, which does not take full advantage of multiple data sources. Future implementations will include:
 
