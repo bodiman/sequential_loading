@@ -22,6 +22,7 @@ Parameters are inputs to a data collection query. They are represented as a row 
 
 # # Metadata
 
+Metadata is information that is tracked about queries executed through a particular data processor. It is stored in a typed pandas dataframe, whose schema is refered to as a `MetaSchema`. The metaschema is defined uniquely for each processor. The metadata is tracked and updated for each query executed through a processor. 
 
 # Data Collectors
 
