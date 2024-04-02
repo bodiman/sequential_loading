@@ -20,11 +20,11 @@ The objects in this library are organized around the following concepts: data, p
 
 Data refers to the actual information that is collected from a data source. Each datapoint is represented as a row in a typed pandas dataframe, whose schema is refered to as a `DataSchema`.
 
-# # Parameters
+## Parameters
 
 Parameters are inputs to a data collection query. They are represented as a row in a typed pandas dataframe, whose schema is refered to as a `ParameterSchema`. It is important to note that while parameters are inputs to a query, there may be additional query inputs that are not parameters. A parameter should be an attribute of a datapoint that fundamentally distinguishes it from another datapoint. For instance, if one were to collect meteorological data, the parameters might include the date and location of the data. The time of day might also be an input to the query, but it would most likely not be a parameter.
 
-# # Metadata
+## Metadata
 
 Metadata is information that is tracked about queries executed through a particular data processor. It is stored in a typed pandas dataframe, whose schema is refered to as a `MetaSchema`. The metaschema is defined uniquely for each processor. The metadata is tracked and updated for each query executed through a processor. 
 
