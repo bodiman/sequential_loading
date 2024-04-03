@@ -41,26 +41,7 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 # These are the parameters that characterize a unique set of datapoints
 
 
-class EODParamSchema(TypedDataFrame):
-    schema = {
-        "ticker": str, 
-        "collector": str
-    }
-
-class EODSchema(TypedDataFrame):
-    schema = {
-        "id": str,
-        "date": DATE_TIME_DTYPE,
-        "open": np.float64,
-        "high": np.float64,
-        "low": np.float64,
-        "close": np.float64,
-        "volume": np.float64
-    }
-
-    unique_constraint = ["id"]
-
-tiingo_collector = tiingoCollector("TIINGO", schema = EODSchema, api_key=tiingo_api_key)
+tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
 
 # my_storage.delete_processor("stock_processor")
 # stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")

@@ -1,6 +1,8 @@
 from sequential_loading.data_collector import DataCollector
 from sequential_loading.sparsity_mapping import SparsityMappingString
 
+from test_application.schemas import EODSchema
+
 import httpx
 import pandas as pd
 
@@ -16,9 +18,8 @@ import datetime
     
 class tiingoCollector(DataCollector):
 
-    def __init__(self, name, *, schema, api_key):
-        super().__init__(name)
-        self.schema = schema
+    def __init__(self, api_key=None):
+        super().__init__(name="TIINGO", schema=EODSchema)
 
         self.api_key = api_key
         self.resample_map = {
