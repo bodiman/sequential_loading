@@ -59,18 +59,25 @@ class IntervalProcessor(DataProcessor):
                     'domain': [f'/{str_interval[0]}|{str_interval[1]}'],
                     'collected_items': [len(data)]
                 })
+                metadata.collected_items = metadata.collected_items.astype(int)
                 
-                #!!! This is a bug, parameters referenced must not be specific to the data
                 #assign parameters for data and metadata
                 data_params = pd.DataFrame({
-                    "ticker": [parameters["ticker"] for _ in range(len(data))],
-                    "collector": [collector.name for _ in range(len(data))]
+                    k: [v for _ in range(len(data))] for k, v in parameters.items()
                 })
+
                 metadata_params = pd.DataFrame({
-                    "ticker": [parameters["ticker"]],
-                    "collector": [collector.name]
+                    k: [v] for k, v in parameters.items()
                 })
-                metadata.collected_items = metadata.collected_items.astype(int)
+
+                # data_params = pd.DataFrame({
+                #     "ticker": [parameters["ticker"] for _ in range(len(data))],
+                #     "collector": [collector.name for _ in range(len(data))]
+                # })
+                # metadata_params = pd.DataFrame({
+                #     "ticker": [parameters["ticker"]],
+                #     "collector": [collector.name]
+                # })
 
                 #updates, validates, and caches data and metadata
                 data = self.update_data(data_params, data)
@@ -102,11 +109,9 @@ class IntervalProcessor(DataProcessor):
                 })
                 metadata.collected_items = metadata.collected_items.astype(int)
                 
-                #!!! Bug: metadata update must not be specific to a "ticker"
                 #assign parameters for data and metadata
                 metadata_params = pd.DataFrame({
-                    "ticker": [parameters["ticker"]],
-                    "collector": [collector.name]
+                    k: [v] for k, v in parameters.items()
                 })
 
                 self.update_metadata(metadata_params, metadata, deletion=True)

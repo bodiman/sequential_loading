@@ -1,14 +1,15 @@
 from sequential_loading.data_storage import SQLStorage
 from sequential_loading.data_processor import IntervalProcessor
-
 from sequential_loading.storage_dataset import CachedDataset
-
 from test_application.collectors import tiingoCollector
+
+from sequential_loading.data_typing import LoaderSchema
+
+from test_application.schemas import EODParamSchema, EODSchema
 
 import datetime
 
 from typedframe import TypedDataFrame, DATE_TIME_DTYPE
-from sequential_loading.data_typing import LoaderSchema
 import pandas as pd
 
 import numpy as np
@@ -44,15 +45,15 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
 
 # my_storage.delete_processor("stock_processor")
-# stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
+stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)
 # stock_processor.collect([tiingo_collector], ticker="SPY", domain="/2020-01-01|2022-02-01")
 # stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
 # stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
 
-processor_list = ["stock_processor", "stock_processor"]
-queries = ["ticker == 'QQQ'", "ticker == 'SPY'"]
-selected_columns = ["open", "high", "low", "close", "volume"]
+# processor_list = ["stock_processor", "stock_processor"]
+# queries = ["ticker == 'QQQ'", "ticker == 'SPY'"]
+# selected_columns = ["open", "high", "low", "close", "volume"]
 
-dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
+# dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
 
-print(dataset[0])
+# print(dataset[0])

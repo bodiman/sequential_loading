@@ -30,7 +30,7 @@ class DataProcessor(ABC):
         self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
 
         self.storage: DataStorage = storage
-        self.initialize(createprocessor=create_processor)
+        self.initialize(create_processor=create_processor)
 
         self.data: Type[TypedDataFrame] = None
         self.cached_metadata: Type[TypedDataFrame] = None
@@ -103,9 +103,9 @@ class DataProcessor(ABC):
         
         return results.iloc[0], results.index[0]
 
-    def initialize(self, createprocessor: bool = False) -> None:
-        self.storage.initialize(self.name, self.schema, primary_keys=self.schema.unique_constraint, createprocessor=createprocessor)
-        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=list(self.paramschema.schema.keys()), createprocessor=createprocessor)
+    def initialize(self, create_processor: bool = False) -> None:
+        self.storage.initialize(self.name, self.schema, primary_keys=self.schema.unique_constraint, create_processor=create_processor)
+        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=list(self.paramschema.schema.keys()), create_processor=create_processor)
     
     @abstractmethod
     def collect(self, collectors: List[DataCollector], **parameters) -> Type[TypedDataFrame]:
