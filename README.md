@@ -115,7 +115,18 @@ Before we create a `DataProcessor`, we need somewhere to store the data and meta
 
 ### Usage
 
-Coming Soon.
+Currently, the only implemented storage is the `SQLStorage`, which stores data in a SQL database. To use the `SQLStorage`, you must provide a valid database url. If there is no existing database, you may specify create_storage=True, which will create a new database with the specified url.
+
+```
+#main.py
+
+from sequential_loading.data_storage import SQLStorage
+
+my_storage = SQLStorage("sqlite:///my_database.db", create_storage=True)
+
+```
+
+The storage never needs to be accessed directly, but is passed in as an argument to `DataProcessor`. The `DataProcessor` will then use the storage to store data and metadata.
 
 ### Creating Custom Data Storages
 
@@ -194,5 +205,5 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 1. A sequential_loading-specific interface for managing schemas and param_schemas
 2. Initialize null metadata in DataProcessor.initialize
 
-# Report Issues
+## Report Issues
 If you would like to report an issue, please contact me at bodszab@nuevaschool.org.
