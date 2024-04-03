@@ -16,8 +16,10 @@ import datetime
     
 class tiingoCollector(DataCollector):
 
-    def __init__(self, name, api_key):
+    def __init__(self, name, *, schema, api_key):
         super().__init__(name)
+        self.schema = schema
+
         self.api_key = api_key
         self.resample_map = {
             "days": "daily",

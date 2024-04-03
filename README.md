@@ -34,6 +34,31 @@ The Sequential Loading Library consists of 4 interfaces: Data Collectors, Data P
 
 ## Data Collectors
 
+The Data Collector class is a dependency inversion of an API. It consists of a retrieve_data method, which must match a specified schema, which is defined in a typed pandas dataframe.
+
+As an example, one may write a Data Collector for the Tiingo API, which retrieves end of day stock prices. First, one would define the schema for the data that is retrieved from the API.
+
+```
+class EODSchema(TypedDataFrame):
+    schema = {
+        "id": str,
+        "date": DATE_TIME_DTYPE,
+        "open": np.float64,
+        "high": np.float64,
+        "low": np.float64,
+        "close": np.float64,
+        "volume": np.float64
+    }
+
+    unique_constraint = ["id"]
+```
+
+The schema extends the TypedDataFrame class from the typeframe library. It must include a schema attribute, which is a dictionary that maps columns to data types.
+
+Next, one would write a class to extend DataCollector, which implements the retrieve_data method.
+
+```
+
 ## Data Processors
 
 ## Data Storages

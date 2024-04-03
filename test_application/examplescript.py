@@ -60,7 +60,7 @@ class EODSchema(TypedDataFrame):
 
     unique_constraint = ["id"]
 
-tiingo_collector = tiingoCollector("TIINGO", api_key=tiingo_api_key)
+tiingo_collector = tiingoCollector("TIINGO", schema = EODSchema, api_key=tiingo_api_key)
 
 # my_storage.delete_processor("stock_processor")
 # stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days")
