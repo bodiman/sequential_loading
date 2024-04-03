@@ -43,7 +43,7 @@ class SQLStorage(DataStorage):
     }
 
 
-    def __init__(self, url: str, createdb: bool = False):
+    def __init__(self, url: str, create_storage: bool = False):
         super().__init__()
 
         self.database_url = make_url(url)
@@ -51,10 +51,10 @@ class SQLStorage(DataStorage):
         self.metadata = MetaData()
 
         if not database_exists(url):
-            if createdb:
+            if create_storage:
                 create_database(url)
             else:
-                raise Exception(f"A database named {self.name} does not exist. To create one, set createdb=True.")
+                raise Exception(f"A database named {self.name} does not exist. To create one, set create_storage=True.")
 
         self.inspector = Inspector.from_engine(self.engine)
         self.metadata.reflect(bind=self.engine)
@@ -89,16 +89,16 @@ class SQLStorage(DataStorage):
         connection.execute(query)
     
     @dbsafe
-    def initialize(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, createtable: bool=False, connection=None):
+    def initialize(self, name: str, tableschema: Type[TypedDataFrame], primary_keys: tuple[str] = None, create_processor: bool=False, connection=None):
         if not self.inspector.has_table(name):
-            if createtable:
+            if create_processor:
                 self.logger.info(f"Creating Table {name}...")
 
                 self.create_table(name, tableschema, primary_keys=primary_keys)
 
                 self.logger.info(f"Created Table {name}")
             else:
-                raise Exception(f"Table {name} does not exist. To create one, set createtable=True.")
+                raise Exception(f"Table {name} does not exist. To create one, set create_processor=True.")
 
         self.processors[name] = Table(name, self.metadata, autoload_with=self.engine)
 

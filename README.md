@@ -45,7 +45,7 @@ The Data Collector class is a dependency inversion of an API. It consists of a r
 As an example, one may write a Data Collector for a stock market api. First, one would define the schema for the data that is retrieved from the API.
 
 ```
-#schemas.py
+# schemas.py
 
 class StockSchema(TypedDataFrame):
     schema = {
@@ -66,11 +66,13 @@ The schema extends the TypedDataFrame class from the typeframe library. It must 
 Next, one would write a class to extend DataCollector, which implements the retrieve_data method. Instances of a class should have a name, which may either be unique to each instance, or shared among multiple instances.
 
 ```
+# collectors.py
+
 from sequential_loading.data_collector import DataCollector
 from schemas import StockSchema
 
 class StockAPICollector(DataCollector):
-    def __init__(self, name, api_key):
+    def __init__(self, api_key):
         super().__init__(name="TIINGO", schema=StockSchema)
         self.api_key = api_key
 
@@ -95,11 +97,83 @@ class StockAPICollector(DataCollector):
         return data
 ```
 
-And that's all there is to it! The Data Collector is now ready to be used in a Data Processor.
+Then, we can use instances of this interface to retrieve data:
+
+```
+# main.py
+from collectors import StockAPICollector
+
+stock_collector = StockAPICollector(api_key)
+```
+
+And that's all there is to it! The `DataCollector` is now ready to be used in a `DataProcessor`.
+
+
+## Data Storages
+
+Before we create a `DataProcessor`, we need somewhere to store the data and metadata we will be tracking.
+
+### Usage
+
+Coming Soon.
+
+### Creating Custom Data Storages
+
+Coming Soon.
+
 
 ## Data Processors
 
-## Data Storages
+`DataProcessors` are the class responsible for tracking and managing the collection of data and metadata through `DataCollectors`. In general, subclasses of `DataProcessor` should be reusable accross multiple schemas, and can handle input from any number of `DataCollectors` that share a schema. They simply define how metadata should be updated. However, each instance of a `DataProcessor` is analogous to a SQL table, and therefore must correspond to a particular dataschema and paramschema.
+
+### Usage
+
+The `DataProcessor` class should be interacted with through the following methods:
+    1. __init__(*args, **kwargs, create_processor=True): creates the processor and initializes metadata. (Actually, it doesn't initialize null metadata yet. This will be added in the future)
+    2. collect(collectors, **parameters): collects data from specified DataCollectors with shared parameter space
+    3. delete(collectors, **parameters): deletes data from specified DataCollectors with shared parameter space
+
+A concrete example of a `DataProcessor` implementation is the `IntervalProcessor`, which is designed to collect data over a specified datetime interval. For the example DataCollector, we defined the StockAPICollector class. We can now create an IntervalProcessor, which will track the time domain over which our collector has been queried. We can reuse the schema we defined above, but we must also define a `ParamSchema` for the IntervalProcessor, so that it knows the groups of data for which it should track metadata.
+
+```
+# schemas.py
+
+class EODParamSchema(TypedDataFrame):
+    schema = {
+        "ticker": str, 
+        "collector": str
+    }
+```
+
+Now, metadata will be tracked for each unique combination of ticker and collector. We can now create an IntervalProcessor using the paramschema, schema, and storage we have defined.
+
+```
+# main.py
+
+from sequential_loading.data_processor import IntervalProcessor
+
+stock_processor = IntervalProcessor(
+    name="StockProcessor",
+    param_schema=StockParamSchema,
+    schema=StockSchema,
+    storage=my_storage,
+    unit="day"
+)
+```
+
+Now, we can collect data from the StockAPICollector using the collect method.
+
+```
+# main.py
+
+stock_processor.collect([stock_collector], ticker="AAPL", start_date="2021-01-01", end_date="2021-01-31")
+```
+
+This will collect data from the StockAPICollector for the ticker "AAPL" over the interval from January 1, 2021 to January 31, 2021. The metadata will be updated to reflect this query.
+
+### Creating Custom Data Processors
+
+Coming Soon.
 
 ## Storage Dataset
 
@@ -107,3 +181,18 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 
 1. Sequential dataset: A dataset created by sequentially loading data from multiple sources, useful for collecting sparse data
 2. Summary dataset: A dataset created by taking the summary statistics of data loaded across different sources. Useful for collecting data where sources are not 100% reliable, and the summary statistics can be used to infer the true value.
+
+
+# Coming Soon
+
+## Urgent Bugs:
+1. IntervalProcessor currently specific to EODSchema in metadata update, need to generalize
+
+## Non-Urgent Bugs:
+
+## Future Features
+1. A sequential_loading-specific interface for managing schemas and param_schemas
+2. Initialize null metadata in DataProcessor.initialize
+
+# Report Issues
+If you would like to report an issue, please contact me at bodszab@nuevaschool.org.

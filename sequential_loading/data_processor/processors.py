@@ -21,8 +21,8 @@ class IntervalProcessor(DataProcessor):
 
     metaschema = IntervalMetaSchema
 
-    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, unit: str, createtable=False) -> None:
-        super().__init__(name, paramschema, schema, self.metaschema, storage, createtable=createtable)
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], storage: DataStorage, unit: str, create_processor=False) -> None:
+        super().__init__(name, paramschema, schema, self.metaschema, storage, create_processor)
 
         self.unit = unit
 
@@ -60,6 +60,7 @@ class IntervalProcessor(DataProcessor):
                     'collected_items': [len(data)]
                 })
                 
+                #!!! This is a bug, parameters referenced must not be specific to the data
                 #assign parameters for data and metadata
                 data_params = pd.DataFrame({
                     "ticker": [parameters["ticker"] for _ in range(len(data))],
@@ -95,13 +96,13 @@ class IntervalProcessor(DataProcessor):
 
                 deleted_count = self.storage.delete_data(self.name, query=deletion_query)
 
-
                 metadata = pd.DataFrame({
                     'domain': [f'/{str_interval[0]}|{str_interval[1]}'],
                     'collected_items': [deleted_count]
                 })
                 metadata.collected_items = metadata.collected_items.astype(int)
                 
+                #!!! Bug: metadata update must not be specific to a "ticker"
                 #assign parameters for data and metadata
                 metadata_params = pd.DataFrame({
                     "ticker": [parameters["ticker"]],

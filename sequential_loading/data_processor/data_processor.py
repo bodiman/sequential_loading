@@ -16,7 +16,7 @@ import uuid
 
 
 class DataProcessor(ABC):
-    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], metaschema: Type[TypedDataFrame], storage: DataStorage, createtable: bool = False) -> None:
+    def __init__(self, name: str, paramschema: Type[TypedDataFrame], schema: Type[TypedDataFrame], metaschema: Type[TypedDataFrame], storage: DataStorage, create_processor: bool = False) -> None:
         #convert types into dataframes (schemas)
         self.name = name
 
@@ -30,7 +30,7 @@ class DataProcessor(ABC):
         self.metaschema = type('ProcessorMetaSchema', (TypedDataFrame,), {"schema": {**paramschema.schema, **metaschema.schema}})
 
         self.storage: DataStorage = storage
-        self.initialize(createtable=createtable)
+        self.initialize(createprocessor=create_processor)
 
         self.data: Type[TypedDataFrame] = None
         self.cached_metadata: Type[TypedDataFrame] = None
@@ -103,9 +103,9 @@ class DataProcessor(ABC):
         
         return results.iloc[0], results.index[0]
 
-    def initialize(self, createtable: bool = False) -> None:
-        self.storage.initialize(self.name, self.schema, primary_keys=self.schema.unique_constraint, createtable=createtable)
-        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=list(self.paramschema.schema.keys()), createtable=createtable)
+    def initialize(self, createprocessor: bool = False) -> None:
+        self.storage.initialize(self.name, self.schema, primary_keys=self.schema.unique_constraint, createprocessor=createprocessor)
+        self.storage.initialize(f"{self.name}_metadata", self.metaschema, primary_keys=list(self.paramschema.schema.keys()), createprocessor=createprocessor)
     
     @abstractmethod
     def collect(self, collectors: List[DataCollector], **parameters) -> Type[TypedDataFrame]:
