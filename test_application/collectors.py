@@ -1,7 +1,7 @@
 from sequential_loading.data_collector import DataCollector
 from sequential_loading.sparsity_mapping import SparsityMappingString
 
-from test_application.schemas import EODSchema
+from test_application.schemas import EODSchema, WeatherSchema
 
 import httpx
 import pandas as pd
@@ -13,6 +13,8 @@ import uuid
 from typing import Tuple
 
 import datetime
+
+import pandas as pd
 
 #EOD Collectors
     
@@ -57,18 +59,27 @@ class tiingoCollector(DataCollector):
         return df
     
 
-# # Weather Collectors
+# Weather Collectors
     
-# class weatherCollector(DataCollector):
-#     def __init__(self, name, api_key):
-#         super().__init__(name)
+class newYorkWeatherCollector(DataCollector):
+    def __init__(self):
+        super().__init__(name="NEWYORKCOLLECTOR", schema=WeatherSchema)
 
-#         self.api_key = api_key
+        self.data = pd.read_csv("test_application/nyc_temperature.csv")
+        print(self.data)
 
-#     def retrieve_data(self, interval: Tuple[str, str], location: str):
-#         startdate = interval[0].strftime("%Y-%m-%d")
-#         enddate = interval[1].strftime("%Y-%m-%d")
+    def retrieve_data(self, interval: Tuple[str, str], location="New York", **kwargs):
+
+        if location != "New York":
+            return f"Location {location} not supported."
+
+        startdate = interval[0].strftime("%d-%m-%y")
+        enddate = interval[1].strftime("%d-%m-%y")
+
+        result = self.data[(self.data['date'] >= startdate) & (self.data['date'] <= enddate)]
+
+        result = result[['date', 'tmax', 'tmin', 'tavg', 'CDD', 'precipitation', 'new_snow']]
+        result['new_snow'][result['new_snow'] != 0] = 1
+        result['precipitation'][result['precipitation'] != 0] = 1       
         
-        
-        
-#         # return result
+        return result

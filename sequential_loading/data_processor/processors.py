@@ -79,9 +79,10 @@ class IntervalProcessor(DataProcessor):
             self.storage.store_data(self.name, data, self.cached_metadata)
                 
 
-    def delete(self, collector: DataCollector, domain: str, **parameters: Type[TypedDataFrame]) -> None:
+    def delete(self, domain: str, **parameters: Type[TypedDataFrame]) -> None:
+        collector = parameters["collector"]
         #query data with particular parameters
-        existing_metadata, _ = self.retrieve_metadata(collector=collector.name, **parameters)
+        existing_metadata, _ = self.retrieve_metadata(**parameters)
         existing_domain = existing_metadata['domain'] if existing_metadata is not None else None
         existing_domain = SparsityMappingString(unit=self.unit, string=existing_domain)
         #subtract existing domain from specified domain to get derrived domain, subtract specified domain from existing domain to get new domain

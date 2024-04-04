@@ -1,4 +1,7 @@
 .env
 .conda
+*.csv
+
+*.DS_Store
 
 __pycache__

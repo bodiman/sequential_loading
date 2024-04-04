@@ -1,11 +1,11 @@
 from sequential_loading.data_storage import SQLStorage
 from sequential_loading.data_processor import IntervalProcessor
 from sequential_loading.storage_dataset import CachedDataset
-from test_application.collectors import tiingoCollector
+from test_application.collectors import tiingoCollector, newYorkWeatherCollector
 
 from sequential_loading.data_typing import LoaderSchema
 
-from test_application.schemas import EODParamSchema, EODSchema
+from test_application.schemas import EODParamSchema, EODSchema, WeatherParamSchema, WeatherSchema
 
 import datetime
 
@@ -42,13 +42,18 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 # These are the parameters that characterize a unique set of datapoints
 
 
-tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
+# tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
+
+weather_collector = newYorkWeatherCollector()
+x = weather_collector.retrieve_data(location="New York", interval=(datetime.datetime(2018, 1, 1), datetime.datetime(2022, 1, 1)))
+
+print(x)
 
 # my_storage.delete_processor("stock_processor")
-stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)
-stock_processor.collect(collector=tiingo_collector, ticker="SPY", domain="/2020-01-01|2022-02-01")
-# stock_processor.collect([tiingo_collector], ticker="QQQ", domain="/2020-01-01|2022-02-01")
-# stock_processor.delete([tiingo_collector], ticker="QQQ", domain="/2021-02-02|2022-02-01")
+# stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)
+# stock_processor.collect(collector=tiingo_collector, ticker="SPY", domain="/2020-01-01|2022-02-01")
+# stock_processor.collect(collector=tiingo_collector, ticker="QQQ", domain="/2020-01-01|2022-02-01")
+# stock_processor.delete(collector=tiingo_collector, ticker="QQQ", domain="/2020-01-01|2022-02-01")
 
 # processor_list = ["stock_processor", "stock_processor"]
 # queries = ["ticker == 'QQQ'", "ticker == 'SPY'"]
