@@ -182,6 +182,8 @@ stock_processor.collect([stock_collector], ticker="AAPL", start_date="2021-01-01
 
 This will collect data from the StockAPICollector for the ticker "AAPL" over the interval from January 1, 2021 to January 31, 2021. The metadata will be updated to reflect this query.
 
+It should be noted that the entire **kwargs dictionary of a processor call is passed into the DataCollector's retrieve_data method.
+
 ### Creating Custom Data Processors
 
 Coming Soon.
@@ -197,7 +199,6 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 # Coming Soon
 
 ## Urgent Bugs:
-1. IntervalProcessor currently specific to EODSchema in metadata update, need to generalize
 
 ## Non-Urgent Bugs:
 

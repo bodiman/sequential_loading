@@ -7,6 +7,9 @@ class DataCollector(ABC):
         self.name = name
         self.schema = schema
 
+    def __str__(self):
+        return self.name
+
     @abstractmethod
     def retrieve_data(self, **parameters) -> pd.DataFrame | str:
         pass

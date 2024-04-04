@@ -29,7 +29,7 @@ class tiingoCollector(DataCollector):
         }
         
 
-    def retrieve_data(self, interval: Tuple[str, str], ticker, resample_freq=None):
+    def retrieve_data(self, interval: Tuple[str, str], ticker, resample_freq=None, **kwargs):
         interval = (interval[0].strftime("%Y-%m-%d"), interval[1].strftime("%Y-%m-%d"))
 
         if resample_freq is None:
