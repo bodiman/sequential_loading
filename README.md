@@ -201,10 +201,10 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 ## Urgent Bugs:
 
 ## Non-Urgent Bugs:
+1. Initialize null metadata in DataProcessor.initialize
 
 ## Future Features
 1. A sequential_loading-specific interface for managing schemas and param_schemas
-2. Initialize null metadata in DataProcessor.initialize
 
 ## Report Issues
 If you would like to report an issue, please contact me at bodszab@nuevaschool.org.
