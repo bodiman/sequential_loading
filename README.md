@@ -177,7 +177,7 @@ Now, we can collect data from the StockAPICollector using the collect method.
 ```
 # main.py
 
-stock_processor.collect([stock_collector], ticker="AAPL", start_date="2021-01-01", end_date="2021-01-31")
+stock_processor.collect(collector=stock_collector, ticker="AAPL", start_date="2021-01-01", end_date="2021-01-31")
 ```
 
 This will collect data from the StockAPICollector for the ticker "AAPL" over the interval from January 1, 2021 to January 31, 2021. The metadata will be updated to reflect this query.
