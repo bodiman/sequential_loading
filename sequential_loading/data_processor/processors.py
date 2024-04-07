@@ -76,11 +76,13 @@ class IntervalProcessor(DataProcessor):
             metadata = self.update_metadata(metadata_params, metadata) 
             
             #store data
+            #update_data and metadata return new data. But, metadata replaces the old metadata, so we need to write the whole cached metadata.
+            #maybe this can be changed in the future
             self.storage.store_data(self.name, data, self.cached_metadata)
                 
 
     def delete(self, domain: str, **parameters: Type[TypedDataFrame]) -> None:
-        collector = parameters["collector"]
+        # collector = parameters["collector"]
         #query data with particular parameters
         existing_metadata, _ = self.retrieve_metadata(**parameters)
         existing_domain = existing_metadata['domain'] if existing_metadata is not None else None

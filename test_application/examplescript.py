@@ -45,9 +45,11 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 # tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
 
 weather_collector = newYorkWeatherCollector()
-x = weather_collector.retrieve_data(location="New York", interval=(datetime.datetime(2018, 1, 1), datetime.datetime(2022, 1, 1)))
+weather_processor = IntervalProcessor("weather_processor", WeatherParamSchema, WeatherSchema, my_storage, unit="days", create_processor=True)
+weather_processor.collect(collector=weather_collector, location="New York", domain="/2019-01-01|2020-01-01")
+# x = weather_collector.retrieve_data(location="New York", interval=(datetime.datetime(2018, 1, 1), datetime.datetime(2022, 1, 1)))
 
-print(x)
+# print(x)
 
 # my_storage.delete_processor("stock_processor")
 # stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)

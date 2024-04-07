@@ -39,6 +39,7 @@ class SQLStorage(DataStorage):
         str: 'TEXT',
         bool: 'INTEGER',  # SQLite uses 0 and 1 for boolean values
         np.float64: 'REAL',
+        np.int64: 'INTEGER',
         DATE_TIME_DTYPE: 'TIMESTAMP'
     }
 

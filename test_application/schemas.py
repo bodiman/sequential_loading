@@ -27,15 +27,14 @@ class WeatherParamSchema(TypedDataFrame):
         "collector": str
     }
 
-'date', 'tmax', 'tmin', 'tavg', 'CDD', 'precipitation', 'new_snow'
 class WeatherSchema(TypedDataFrame):
     schema = {
         "id": str,
         "date": DATE_TIME_DTYPE,
-        "tmin": np.float64,
-        "tmax": np.float64,
+        "tmin": np.int64,
+        "tmax": np.int64,
         "tavg": np.float64,
-        "CDD": np.float64,
+        "cdd": np.float64,
         "precipitation": np.float64,
         "new_snow": np.float64
     }

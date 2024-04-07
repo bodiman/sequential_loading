@@ -61,25 +61,44 @@ class tiingoCollector(DataCollector):
 
 # Weather Collectors
     
+def reformat_datestr(datestr):
+    datestr = datestr.split("/")
+
+    #day, month, year to year, month, day
+    datestr = datestr[::-1]
+    return "-".join(datestr)
+    
 class newYorkWeatherCollector(DataCollector):
     def __init__(self):
         super().__init__(name="NEWYORKCOLLECTOR", schema=WeatherSchema)
 
         self.data = pd.read_csv("test_application/nyc_temperature.csv")
-        print(self.data)
 
     def retrieve_data(self, interval: Tuple[str, str], location="New York", **kwargs):
 
         if location != "New York":
             return f"Location {location} not supported."
 
-        startdate = interval[0].strftime("%d-%m-%y")
-        enddate = interval[1].strftime("%d-%m-%y")
+        startdate = interval[0].strftime("%y-%m-%d")
+        enddate = interval[1].strftime("%y-%m-%d")
 
+        self.data["date"] = self.data["date"].apply(reformat_datestr)
         result = self.data[(self.data['date'] >= startdate) & (self.data['date'] <= enddate)]
+        result['date'] = pd.to_datetime(result['date'], format="%y-%m-%d")
 
         result = result[['date', 'tmax', 'tmin', 'tavg', 'CDD', 'precipitation', 'new_snow']]
-        result['new_snow'][result['new_snow'] != 0] = 1
-        result['precipitation'][result['precipitation'] != 0] = 1       
+        result['new_snow'][result['new_snow'] != "0"] = 1
+        result['precipitation'][result['precipitation'] != "0"] = 1  
+
+        result['precipitation'] = result['precipitation'].astype(float)
+        result['new_snow'] = result['new_snow'].astype(float)
+        result['CDD'] = result['CDD'].astype(float)
+
+        result = result.rename(columns={'CDD': 'cdd'})
+
+        # print("this ran 10")
+        # print(result)
+
+        result['id'] = [uuid.uuid4() for _ in range(len(result))]
         
         return result

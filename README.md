@@ -196,12 +196,19 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 2. Summary dataset: A dataset created by taking the summary statistics of data loaded across different sources. Useful for collecting data where sources are not 100% reliable, and the summary statistics can be used to infer the true value.
 
 
+# Column Name Requirements
+1. Column names must be lower case
+2. A column name must not be a substring of another existing column name
+3. A column name may not be a reserved word in SQL
+
+
 # Coming Soon
 
 ## Urgent Bugs:
 
 ## Non-Urgent Bugs:
 1. Initialize null metadata in DataProcessor.initialize
+2. Improved errors for schema validation and column name requirements
 
 ## Future Features
 1. A sequential_loading-specific interface for managing schemas and param_schemas
