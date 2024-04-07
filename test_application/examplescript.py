@@ -42,25 +42,28 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 # These are the parameters that characterize a unique set of datapoints
 
 
-# tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
-
-weather_collector = newYorkWeatherCollector()
 weather_processor = IntervalProcessor("weather_processor", WeatherParamSchema, WeatherSchema, my_storage, unit="days", create_processor=True)
-weather_processor.collect(collector=weather_collector, location="New York", domain="/2019-01-01|2020-01-01")
-# x = weather_collector.retrieve_data(location="New York", interval=(datetime.datetime(2018, 1, 1), datetime.datetime(2022, 1, 1)))
 
-# print(x)
+# weather_collector = newYorkWeatherCollector()
+# weather_processor.collect(collector=weather_collector, location="New York", domain="/2019-01-01|2020-01-01")
 
 # my_storage.delete_processor("stock_processor")
-# stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)
-# stock_processor.collect(collector=tiingo_collector, ticker="SPY", domain="/2020-01-01|2022-02-01")
+
+stock_processor = IntervalProcessor("stock_processor", EODParamSchema, EODSchema, my_storage, unit="days", create_processor=True)
+
+tiingo_collector = tiingoCollector(api_key=tiingo_api_key)
+stock_processor.collect(collector=tiingo_collector, ticker="SPY", domain="/2019-01-01|2022-02-01")
 # stock_processor.collect(collector=tiingo_collector, ticker="QQQ", domain="/2020-01-01|2022-02-01")
 # stock_processor.delete(collector=tiingo_collector, ticker="QQQ", domain="/2020-01-01|2022-02-01")
 
 # processor_list = ["stock_processor", "stock_processor"]
-# queries = ["ticker == 'QQQ'", "ticker == 'SPY'"]
+# queries = ["ticker=='SPY'", "ticker=='SPY'"]
 # selected_columns = ["open", "high", "low", "close", "volume"]
 
-# dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
+processor_list = ["stock_processor", "weather_processor"]
+queries = ["ticker == 'SPY'", "location == 'New York'"]
+selected_columns = ["open", "high", "low", "close", "volume", "tmin", "tmax", "tavg", "cdd", "precipitation", "new_snow"]
 
-# print(dataset[0])
+dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
+
+print(dataset[0])
