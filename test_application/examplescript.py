@@ -25,7 +25,7 @@ tiingo_api_key = os.getenv('TIINGO_API_KEY')
 weather_api_key = os.getenv('CLIMATE_API_KEY')
 
 #plz don't hack me
-my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
+my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage", create_storage=True)
 
 # Each datapoint has a corresponding set of parameters that are not necessarily unique.
 # Each set of parameters has a corresponding set of metadata that is unique.
@@ -44,8 +44,8 @@ my_storage = SQLStorage("postgresql://bodszab@localhost:5432/xteststorage")
 
 weather_processor = IntervalProcessor("weather_processor", WeatherParamSchema, WeatherSchema, my_storage, unit="days", create_processor=True)
 
-# weather_collector = newYorkWeatherCollector()
-# weather_processor.collect(collector=weather_collector, location="New York", domain="/2019-01-01|2020-01-01")
+weather_collector = newYorkWeatherCollector()
+weather_processor.collect(collector=weather_collector, location="New York", domain="/2019-01-01|2020-01-01")
 
 # my_storage.delete_processor("stock_processor")
 
@@ -60,10 +60,10 @@ stock_processor.collect(collector=tiingo_collector, ticker="SPY", domain="/2019-
 # queries = ["ticker=='SPY'", "ticker=='SPY'"]
 # selected_columns = ["open", "high", "low", "close", "volume"]
 
-processor_list = ["stock_processor", "weather_processor"]
-queries = ["ticker == 'SPY'", "location == 'New York'"]
-selected_columns = ["open", "high", "low", "close", "volume", "tmin", "tmax", "tavg", "cdd", "precipitation", "new_snow"]
+# processor_list = ["stock_processor", "weather_processor"]
+# queries = ["ticker == 'SPY'", "location == 'New York'"]
+# selected_columns = ["open", "high", "low", "close", "volume", "tmin", "tmax", "tavg", "cdd", "precipitation", "new_snow"]
 
-dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
+# dataset = CachedDataset(my_storage, processor_names=processor_list, join_column=["date"], selected_columns=selected_columns, queries=queries)
 
-print(dataset[0])
+# print(dataset[0])

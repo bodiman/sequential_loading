@@ -87,6 +87,8 @@ class newYorkWeatherCollector(DataCollector):
         result['date'] = pd.to_datetime(result['date'], format="%y-%m-%d")
 
         result = result[['date', 'tmax', 'tmin', 'tavg', 'CDD', 'precipitation', 'new_snow']]
+
+        #chained assignment warning, need to fix
         result['new_snow'][result['new_snow'] != "0"] = 1
         result['precipitation'][result['precipitation'] != "0"] = 1  
 

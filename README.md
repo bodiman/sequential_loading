@@ -4,6 +4,14 @@ This library provides a framework for loading data from multiple sources under a
 
 The term "Sequential Loading" refers to the process of patching together a dataset by starting with a single data source and sequentially "filling in the gaps" using other sources. The Sequential Loading library provides a way to collect and store information about queries made to different data sources, and then synthesize a dataset from multiple sources.
 
+## Setup and Dependencies
+This library requires Python 3.11 or later.
+
+To get started, install the requirements.txt fileusing pip:
+```
+pip install -r requirements.txt
+```
+
 # Motivation
 When collecting sparsely-available data, it is often necessary to load data from multiple sources. Effectively patching together datasets requires an organized representation of 
 
@@ -18,11 +26,11 @@ The objects in this library are organized around the following concepts: data, p
 
 ## Data
 
-Data refers to the actual information that is collected from a data source. Each datapoint is represented as a row in a typed pandas dataframe, whose schema is refered to as a `DataSchema`.
+Data refers to the actual information that is collected from a data source. Each datapoint is represented as a row in a typed pandas dataframe, whose schema is referred to as a `DataSchema`.
 
 ## Parameters
 
-Parameters are inputs to a data collection query. They are represented as a row in a typed pandas dataframe, whose schema is refered to as a `ParameterSchema`. It is important to note that while parameters are inputs to a query, there may be additional query inputs that are not parameters.
+Parameters are inputs to a data collection query. They are represented as a row in a typed pandas dataframe, whose schema is referred to as a `ParameterSchema`. It is important to note that while parameters are inputs to a query, there may be additional query inputs that are not parameters.
 
 A parameter should be an attribute of a datapoint that fundamentally distinguishes it from another datapoint. Each datapoint has a corresponding set of parameters, which is not necessarily unique. For instance, if one were to collect meteorological data, the parameters might include the date and location of the data. The time of day might also be an input to the query, but it would most likely not be a parameter.
 
@@ -30,7 +38,7 @@ Parameters define the "buckets" into which datapoints fall. Metadata is not trac
 
 ## Metadata
 
-Metadata is information that is tracked about queries executed through a particular data processor. It is stored in a typed pandas dataframe, whose schema is refered to as a `MetaSchema`. The metaschema is defined uniquely for each processor. The metadata is tracked and updated for each query executed through a processor.
+Metadata is information that is tracked about queries executed through a particular data processor. It is stored in a typed pandas dataframe, whose schema is referred to as a `MetaSchema`. The metaschema is defined uniquely for each processor. The metadata is tracked and updated for each query executed through a processor.
 
 Metadata is tracked for each unique set of parameters. One example of metadata might be the time domain over which a data collector has been queried. In the case of a missing date in the data, this would allow one to determine weather the data is missing from the API, or if it has not been collected.
 
@@ -140,9 +148,9 @@ Coming Soon.
 ### Usage
 
 The `DataProcessor` class should be interacted with through the following methods:
-    1. __init__(*args, **kwargs, create_processor=True): creates the processor and initializes metadata. (Actually, it doesn't initialize null metadata yet. This will be added in the future)
-    2. collect(collectors, **parameters): collects data from specified DataCollectors with shared parameter space
-    3. delete(collectors, **parameters): deletes data from specified DataCollectors with shared parameter space
+1. __init__(*args, **kwargs, create_processor=True): creates the processor and initializes metadata. (Actually, it doesn't initialize null metadata yet. This will be added in the future)
+2. collect(collectors, **parameters): collects data from specified DataCollectors with shared parameter space
+3. delete(collectors, **parameters): deletes data from specified DataCollectors with shared parameter space
 
 A concrete example of a `DataProcessor` implementation is the `IntervalProcessor`, which is designed to collect data over a specified datetime interval. For the example DataCollector, we defined the StockAPICollector class. We can now create an IntervalProcessor, which will track the time domain over which our collector has been queried. We can reuse the schema we defined above, but we must also define a `ParamSchema` for the IntervalProcessor, so that it knows the groups of data for which it should track metadata.
 
@@ -210,6 +218,7 @@ A storage Dataset is the interface for synthesizing a dataset from data collecte
 1. Initialize null metadata in DataProcessor.initialize
 2. Improved errors for schema validation and column name requirements
 3. Error handling for empty data retrieval
+4. Pandas SettingWithCopy warning in collectors.py
 
 ## Future Features
 1. A sequential_loading-specific interface for managing schemas and param_schemas
