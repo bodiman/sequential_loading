@@ -34,7 +34,7 @@ delete_processor: (processor: DataProcessor) -> None:
 """
 class DataStorage(ABC):
 
-    def retrieve_data(self, processor_names: List[str], join_column: str = None, query: str = None, join_columns: List[str] = None, queries: List[str] = None, **kwargs) -> pd.DataFrame:
+    def retrieve_data(self, processor_names: List[str], join_column: str = None, query: str = None, join_columns: List[str] = None, queries: List[str] = None, suffixes: List[str] = None, **kwargs) -> pd.DataFrame:
         assert not query or not queries, "Only query or queries can be specified"
         assert not join_column or not join_columns, "Only join_column or join_columns can be specified"
 
@@ -54,9 +54,9 @@ class DataStorage(ABC):
         
         full_table = self.retrieve_processor(processor_names[0], query=queries[0], **kwargs)
 
-        for p_name, p_query, p_column in zip(processor_names[1:], queries[1:], join_columns):
+        for p_name, p_query, p_column, suffix in zip(processor_names[1:], queries[1:], join_columns, suffixes):
             data = self.retrieve_processor(p_name, query=p_query, **kwargs)
-            full_table = full_table.merge(data, on=p_column, how='inner')
+            full_table = full_table.merge(data, on=p_column, how='inner', suffixes=("", suffix))
 
         return full_table
 

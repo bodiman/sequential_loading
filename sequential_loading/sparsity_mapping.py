@@ -20,9 +20,7 @@ class SparsityMappingString():
 
         if str_to_date is None:
             def str_to_date(string):
-                # print(string, datetime_format)
                 return datetime.strptime(string, datetime_format)
-            # str_to_date = lambda string: datetime.strptime(string, datetime_format)
 
         self.datetime_format = datetime_format
         self.date_to_str = date_to_str
@@ -299,16 +297,21 @@ class SparsityMappingString():
 
     """
     def subtract_continuous_intervals(self, interval1: str, interval2: str):
+        interval1 = copy.copy(interval1)
+        interval2 = copy.copy(interval2)
+
+        #1 and 2 do not intersect
         if not intervals_intersect(interval1, interval2, unit=self.unit):
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
 
             return  f"{interval1[0]}|{interval1[1]}"
         
+        #2  contains 1
         if interval2[0] <= interval1[0] and interval1[1] <= interval2[1]:
             return ""
 
-        #1 is proper subset
+        #1 properly contains 2
         if interval1[0] < interval2[0] and interval2[1] < interval1[1]:
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
@@ -317,18 +320,23 @@ class SparsityMappingString():
 
             return f"{interval1[0]}|{interval2[0]}/{interval2[1]}|{interval1[1]}"
         
-        #one starts in front of the other
-        if interval1[0] >= interval2[0]:
+        #1 starts in front of 2
+        if interval1[0] > interval2[0]:
             interval1[0] = self.date_to_str(interval1[0])
             interval1[1] = self.date_to_str(interval1[1])
             interval2[1] = self.date_to_str(increment(interval2[1], self.unit))
 
             return f"{interval2[1]}|{interval1[1]}"
         
+        # s2, s1, e2, e1
+        
+        #2 starts in front of 1
         interval1[0] = self.date_to_str(interval1[0])
         interval1[1] = self.date_to_str(interval1[1])
-        interval2[0] = self.date_to_str(increment(interval2[0], self.unit))
+        interval2[0] = self.date_to_str(increment(interval2[0], self.unit, decrement=True))
         return f"{interval1[0]}|{interval2[0]}"
+    
+        # s1, s2, e1, e2
 
         """
         Here are the cases:

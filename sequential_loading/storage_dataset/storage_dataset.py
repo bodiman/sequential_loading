@@ -21,11 +21,16 @@ class StorageDataset(ABC, Dataset):
                  query: str | List[str] = None, \
                  queries: List[str] | List[List[str]] = None, \
                  selected_columns: List[str] = None, \
+                 suffixes: List[str] = None, \
                  **parameters):
         
         assert not query or not queries, "Only query or queries can be specified"
         assert not join_column or not join_columns, "Only join_column or join_columns can be specified"
         assert join_column is not None or join_columns is not None or len(processor_names) <= 1, "At least one join column must be specified for multiple processors"
+
+        if suffixes is None:
+            self.suffixes = [str(i) for i in range(len(processor_names) - 1)]
+        self.suffixes = suffixes
 
         if query:
             queries = [query] * len(processor_names)
@@ -43,12 +48,13 @@ class StorageDataset(ABC, Dataset):
         if selected_columns is not None:
             self.dataframe = self.dataframe.filter(regex=f"({'|'.join(selected_columns)})")
 
+    @abstractmethod
     def __len__(self):
-        return len(self.dataframe)
+        pass
 
+    @abstractmethod
     def __getitem__(self, index):
-        x = self.dataframe.iloc[index].values
-        return torch.tensor(x)
+        pass
 
     @abstractmethod
     def load(self, **parameters) -> pd.DataFrame:

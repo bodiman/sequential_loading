@@ -51,9 +51,6 @@ class IntervalProcessor(DataProcessor):
             if isinstance(data, str):
                 self.logger.error(f"Error retrieving data from collector {collector.name} for interval {interval} on parameters {parameters}: {data}")
                 continue
-
-            if data.empty:
-                continue
             
             #set metadata
             metadata = pd.DataFrame({
@@ -72,7 +69,11 @@ class IntervalProcessor(DataProcessor):
             })
 
             #updates, validates, and caches data and metadata
-            data = self.update_data(data_params, data)
+            if not data.empty:
+                data = self.update_data(data_params, data)
+            else:
+                data = None
+            
             metadata = self.update_metadata(metadata_params, metadata) 
             
             #store data
