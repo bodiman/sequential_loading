@@ -1,8 +1,7 @@
 from sequential_loading.data_storage import DataStorage
 from sequential_loading.data_processor import DataProcessor
 
-from sqlalchemy import create_engine, delete, MetaData, Table, text
-from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy import create_engine, delete, MetaData, Table, text, inspect
 from sqlalchemy.engine.url import make_url
 
 from sqlalchemy_utils import database_exists, create_database
@@ -57,7 +56,7 @@ class SQLStorage(DataStorage):
             else:
                 raise Exception(f"A database named {self.name} does not exist. To create one, set create_storage=True.")
 
-        self.inspector = Inspector.from_engine(self.engine)
+        self.inspector = inspect(self.engine)
         self.metadata.reflect(bind=self.engine)
 
         self.tables = self.inspector.get_table_names()
